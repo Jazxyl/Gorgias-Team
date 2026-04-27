@@ -455,7 +455,8 @@ function parseCSV(text) {
     if (!line.trim()) return null;
     const vals = parseLine(line);
     // Skip warning/note rows (start with ⚠ or emoji)
-    if (vals[0] && (vals[0].startsWith('\u26a0') || vals[0].startsWith('⚠'))) return null;
+    const firstVal = vals[0] || '';
+    if (firstVal.startsWith('\u26a0') || firstVal.startsWith('⚠') || firstVal.includes('USERS') || firstVal.includes('LEAVES') || firstVal.includes('TRACKER') || firstVal.includes('ANNOUNCEMENTS') || firstVal.includes('AGENTS')) return null;
     const obj = {};
     headers.forEach((h, i) => obj[h] = (vals[i] || '').trim());
     return obj;
@@ -590,24 +591,48 @@ async function loadAllData() {
 // ═══════════════════════════════════════════
 //  HOME / ANNOUNCEMENTS
 // ═══════════════════════════════════════════
+
+// Normalize date to YYYY-MM-DD regardless of input format
+function normalizeDate(d) {
+  if (!d) return '';
+  d = d.toString().trim();
+  // Already YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}/.test(d)) return d.slice(0,10);
+  // MM-DD-YYYY (e.g. 04-17-2026)
+  const dashLong = d.match(/^(\d{2})-(\d{2})-(\d{4})/);
+  if (dashLong) return `${dashLong[3]}-${dashLong[1]}-${dashLong[2]}`;
+  // M-D-YYYY (e.g. 5-2-2026)
+  const dashShort = d.match(/^(\d{1,2})-(\d{1,2})-(\d{4})/);
+  if (dashShort) return `${dashShort[3]}-${dashShort[1].padStart(2,'0')}-${dashShort[2].padStart(2,'0')}`;
+  // M/D/YYYY or MM/DD/YYYY
+  const slash = d.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (slash) return `${slash[3]}-${slash[1].padStart(2,'0')}-${slash[2].padStart(2,'0')}`;
+  // Try JS Date parse as fallback
+  try {
+    const dt = new Date(d);
+    if (!isNaN(dt)) return dt.toISOString().slice(0,10);
+  } catch(e) {}
+  return d;
+}
+
 function renderHome() {
   const ann = DATA.announcements;
   const container = document.getElementById('announcements-container');
   if (!ann.length) {
     container.innerHTML = '<div class="ann-item ann-info"><div class="ann-title">Welcome to TeamHub</div><div class="ann-body">No announcements yet. Connect your Google Sheet in God Mode to load announcements.</div><div class="ann-meta">IT Operations Portal</div></div>';
   } else {
-    const sorted = [...ann].reverse();
+    const sorted = [...ann].filter(a => !a.active || a.active.toString().toUpperCase() !== 'FALSE').reverse();
     container.innerHTML = '<div class="section-title" style="margin-bottom:0.75rem;">📢 Announcements</div>' +
-      sorted.map(a => `<div class="ann-item ann-${a.type||'info'}"><div class="ann-title">${a.title||''}</div><div class="ann-body">${a.body||''}</div><div class="ann-meta">${a.author||''} · ${a.date||''}</div></div>`).join('');
+      sorted.map(a => `<div class="ann-item ann-${a.type||'info'}"><div class="ann-title">${a.title||''}</div><div class="ann-body">${a.body||''}</div><div class="ann-meta">${a.author||''} · ${normalizeDate(a.date)||''}</div></div>`).join('');
   }
 
   // Metrics
   const today = new Date().toISOString().slice(0,10);
-  const onLeave = DATA.leaves.filter(l => l.date === today && l.status && l.status.toLowerCase() !== 'cancelled').length;
+  const onLeave = DATA.leaves.filter(l => normalizeDate(l.date) === today && l.status && l.status.toLowerCase() !== 'cancelled').length;
   const now = new Date();
   const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay());
   const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
-  const otHrs = DATA.ot.filter(o => { const d = new Date(o.date); return d >= weekStart && d <= weekEnd; }).reduce((s,o) => s + parseFloat(o.hours||0), 0);
+  const otHrs = DATA.ot.filter(o => { const d = new Date(normalizeDate(o.date)); return !isNaN(d) && d >= weekStart && d <= weekEnd; }).reduce((s,o) => s + parseFloat(o.hours||0), 0);
 
   document.getElementById('m-leave').textContent = onLeave || DATA.leaves.filter(l=>l.date===today).length || '—';
   document.getElementById('m-ot').textContent = otHrs ? otHrs.toFixed(1)+' hrs' : '—';
@@ -641,7 +666,8 @@ function renderCalendar() {
   const leaveMap = {};
   DATA.leaves.forEach(l => {
     if (!l.date) return;
-    const d = new Date(l.date);
+    const d = new Date(normalizeDate(l.date));
+    if (isNaN(d)) return;
     if (d.getFullYear()===calYear && d.getMonth()===calMonth) {
       const day = d.getDate();
       if (!leaveMap[day]) leaveMap[day] = [];
@@ -680,8 +706,9 @@ function renderOT() {
   const filter = document.getElementById('ot-month-filter').value; // YYYY-MM
   const rows = DATA.ot.filter(r => {
     if (!r.date) return false;
+    const nd = normalizeDate(r.date);
     if (!filter) return true;
-    return r.date.startsWith(filter);
+    return nd.startsWith(filter);
   });
 
   document.getElementById('ot-loading').style.display = 'none';
@@ -694,7 +721,7 @@ function renderOT() {
     tbody.innerHTML = rows.map(r => `
       <tr>
         <td>${r.name||'—'}</td>
-        <td>${r.date||'—'}</td>
+        <td>${normalizeDate(r.date)||'—'}</td>
         <td><strong>${parseFloat(r.hours||0).toFixed(1)}h</strong></td>
         <td style="color:var(--text2);">${r.reason||r.status||'—'}</td>
         <td>${statusBadge(r.status)}</td>
