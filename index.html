@@ -403,7 +403,9 @@ input[type=text],input[type=password]{caret-color:var(--blue);}
 //  CONFIG — persisted in localStorage
 // ═══════════════════════════════════════════
 
+const DEFAULT_USERS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=1588987299&single=true&output=csv';
 let CFG = JSON.parse(localStorage.getItem('teamhub_cfg') || '{}');
+if (!CFG.users) CFG.users = DEFAULT_USERS_URL;
 let SESSION = JSON.parse(localStorage.getItem('teamhub_session') || 'null');
 
 // cached sheet data
