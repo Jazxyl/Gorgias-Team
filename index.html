@@ -622,9 +622,9 @@ function renderHome() {
   if (!ann.length) {
     container.innerHTML = '<div class="ann-item ann-info"><div class="ann-title">Welcome to TeamHub</div><div class="ann-body">No announcements yet. Connect your Google Sheet in God Mode to load announcements.</div><div class="ann-meta">IT Operations Portal</div></div>';
   } else {
-    const sorted = [...ann].filter(a => !a.active || a.active.toString().toUpperCase() !== 'FALSE').reverse();
+    const sorted = [...ann].filter(a => a.title && a.title.trim() && (!a.active || a.active.toString().toUpperCase() !== 'FALSE')).reverse();
     container.innerHTML = '<div class="section-title" style="margin-bottom:0.75rem;">📢 Announcements</div>' +
-      sorted.map(a => `<div class="ann-item ann-${a.type||'info'}"><div class="ann-title">${a.title||''}</div><div class="ann-body">${a.body||''}</div><div class="ann-meta">${a.author||''} · ${normalizeDate(a.date)||''}</div></div>`).join('');
+      sorted.filter(a => a.title && a.title.trim()).map(a => `<div class="ann-item ann-${a.type||'info'}"><div class="ann-title">${a.title.trim()}</div><div class="ann-body">${a.body||''}</div><div class="ann-meta">${a.author||''} · ${normalizeDate(a.date)||''}</div></div>`).join('');
   }
 
   // Metrics
