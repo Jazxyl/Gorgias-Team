@@ -380,6 +380,8 @@ input[type=text],input[type=password]{caret-color:var(--blue);}
         </div>
         <button class="config-btn" onclick="saveConfig()">Save & Connect Sheets</button>
         <span id="cfg-status" style="font-size:12px;color:var(--green);margin-left:12px;"></span>
+        <button class="config-btn" style="background:var(--amber);margin-left:8px;" onclick="debugCSV()">🔍 Debug CSV</button>
+        <pre id="debug-out" style="margin-top:1rem;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:1rem;font-size:11px;color:var(--green);white-space:pre-wrap;word-break:break-all;display:none;max-height:300px;overflow-y:auto;"></pre>
       </div>
 
       <!-- Role Manager -->
@@ -819,6 +821,31 @@ function renderRoleManager() {
 }
 
 function openLink(url) { if(url && url !== '#') window.open(url,'_blank'); }
+
+async function debugCSV() {
+  const out = document.getElementById('debug-out');
+  out.style.display = 'block';
+  out.textContent = 'Fetching...';
+  
+  const keys = ['users','agents','leaves','ot','announcements'];
+  let result = '';
+  
+  for (const k of keys) {
+    if (!CFG[k]) { result += `[${k}] No URL set\n\n`; continue; }
+    try {
+      const res = await fetch(CFG[k]);
+      const text = await res.text();
+      const lines = text.split('\n').slice(0, 5);
+      result += `[${k}] Status: ${res.status}\n`;
+      result += `First 5 lines:\n`;
+      lines.forEach((l,i) => result += `  ${i}: ${l}\n`);
+      result += '\n';
+    } catch(e) {
+      result += `[${k}] ERROR: ${e.message}\n\n`;
+    }
+  }
+  out.textContent = result;
+}
 
 // ═══════════════════════════════════════════
 //  AUTO-RESTORE SESSION
