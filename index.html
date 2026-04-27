@@ -392,15 +392,7 @@ input[type=text],input[type=password]{caret-color:var(--blue);}
         <div id="role-manager-list"></div>
       </div>
 
-      <!-- God Credentials -->
-      <div class="god-section">
-        <div class="section-title">God Mode Credentials</div>
-        <p style="font-size:12px;color:var(--text2);margin-bottom:1rem;">These are hardcoded and not stored in any sheet. Change them directly in the HTML file before deploying.</p>
-        <table>
-          <tr><th>Username</th><th>Password</th><th>Note</th></tr>
-          <tr><td style="color:var(--amber);">admin</td><td style="color:var(--amber);">changeme123</td><td style="color:var(--text2);">Change before sharing</td></tr>
-        </table>
-      </div>
+
     </div>
 
   </div><!-- /content-area -->
@@ -410,8 +402,6 @@ input[type=text],input[type=password]{caret-color:var(--blue);}
 // ═══════════════════════════════════════════
 //  CONFIG — persisted in localStorage
 // ═══════════════════════════════════════════
-const GOD_USER = 'admin';
-const GOD_PASS = 'changeme123';
 
 let CFG = JSON.parse(localStorage.getItem('teamhub_cfg') || '{}');
 let SESSION = JSON.parse(localStorage.getItem('teamhub_session') || 'null');
@@ -482,19 +472,14 @@ function doLogin() {
   const errEl = document.getElementById('login-err');
   errEl.textContent = '';
 
-  if (u === GOD_USER && p === GOD_PASS) {
-    startSession({ username: GOD_USER, display_name: 'Admin', role: 'god' });
-    return;
-  }
-
-  // Try sheet users
+  // Try cached sheet users first
   const found = DATA.users.find(r => r.username === u && r.password === p);
   if (found) {
     startSession({ username: found.username, display_name: found.display_name || found.username, role: found.role || 'agent' });
     return;
   }
 
-  // If no sheet loaded yet, try fetching
+  // If not cached yet, fetch from sheet
   if (CFG.users) {
     errEl.textContent = 'Checking credentials...';
     fetchCSV(CFG.users).then(rows => {
