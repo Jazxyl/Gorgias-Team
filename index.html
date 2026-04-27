@@ -404,6 +404,7 @@ input[type=text],input[type=password]{caret-color:var(--blue);}
 //  CONFIG — persisted in localStorage
 // ═══════════════════════════════════════════
 
+// ── HARDCODED SHEET URLS (always works, no localStorage needed) ──
 const DEFAULTS = {
   users:         'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=1588987299&single=true&output=csv',
   agents:        'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=450581324&single=true&output=csv',
@@ -411,12 +412,19 @@ const DEFAULTS = {
   ot:            'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=600018604&single=true&output=csv',
   announcements: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=616452407&single=true&output=csv'
 };
-const savedCFG = JSON.parse(localStorage.getItem('teamhub_cfg') || '{}');
-// Always start with defaults, override with saved values
-let CFG = Object.assign({}, DEFAULTS, savedCFG);
-// But if saved value is empty string, fall back to default
-Object.keys(DEFAULTS).forEach(k => { if (!CFG[k]) CFG[k] = DEFAULTS[k]; });
-let SESSION = JSON.parse(localStorage.getItem('teamhub_session') || 'null');
+
+// CFG always starts from DEFAULTS. localStorage only overrides if god sets custom URLs.
+function buildCFG() {
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem('teamhub_cfg') || '{}'); } catch(e) {}
+  const cfg = Object.assign({}, DEFAULTS);
+  Object.keys(saved).forEach(k => { if (saved[k] && saved[k].trim()) cfg[k] = saved[k].trim(); });
+  return cfg;
+}
+let CFG = buildCFG();
+
+// SESSION in memory only — user logs in every session (works in incognito)
+let SESSION = null;
 
 // cached sheet data
 let DATA = { users:[], agents:[], leaves:[], ot:[], announcements:[] };
@@ -507,7 +515,7 @@ function doLogin() {
 
 function startSession(user) {
   SESSION = user;
-  localStorage.setItem('teamhub_session', JSON.stringify(user));
+  // Session stored in memory only - works in incognito
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
   document.getElementById('app').style.flexDirection = 'column';
@@ -541,7 +549,7 @@ function startSession(user) {
 
 function doLogout() {
   SESSION = null;
-  localStorage.removeItem('teamhub_session');
+  SESSION = null;
   document.getElementById('app').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('login-user').value = '';
@@ -804,7 +812,7 @@ function filterAgents() {
 //  GOD MODE — CONFIG & ROLE MANAGER
 // ═══════════════════════════════════════════
 function loadCfgInputs() {
-  CFG = JSON.parse(localStorage.getItem('teamhub_cfg') || '{}');
+  CFG = buildCFG();
   ['users','agents','leaves','ot','announcements'].forEach(k => {
     const el = document.getElementById('cfg-'+k);
     if (el) el.value = CFG[k] || '';
@@ -828,7 +836,8 @@ function saveConfig() {
       if (val) CFG[k] = val;
     }
   });
-  localStorage.setItem('teamhub_cfg', JSON.stringify(CFG));
+  try { localStorage.setItem('teamhub_cfg', JSON.stringify(CFG)); } catch(e) {}
+CFG = buildCFG();
   
   // Verify it actually saved
   const saved = JSON.parse(localStorage.getItem('teamhub_cfg') || '{}');
@@ -898,12 +907,7 @@ async function debugCSV() {
   out.textContent = result;
 }
 
-// ═══════════════════════════════════════════
-//  AUTO-RESTORE SESSION
-// ═══════════════════════════════════════════
-if (SESSION) {
-  startSession(SESSION);
-}
+// No auto-restore - user logs in every session for reliability
 </script>
 </body>
 </html>
