@@ -410,8 +410,10 @@ const DEFAULTS = {
   ot:            'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=600018604&single=true&output=csv',
   announcements: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=616452407&single=true&output=csv'
 };
-let CFG = JSON.parse(localStorage.getItem('teamhub_cfg') || '{}');
-// Fill in any missing URLs from defaults
+const savedCFG = JSON.parse(localStorage.getItem('teamhub_cfg') || '{}');
+// Always start with defaults, override with saved values
+let CFG = Object.assign({}, DEFAULTS, savedCFG);
+// But if saved value is empty string, fall back to default
 Object.keys(DEFAULTS).forEach(k => { if (!CFG[k]) CFG[k] = DEFAULTS[k]; });
 let SESSION = JSON.parse(localStorage.getItem('teamhub_session') || 'null');
 
