@@ -147,7 +147,7 @@ tr:hover td{background:var(--bg3);}
 
 /* ── HIDDEN ── */
 .page{display:none;}.page.active{display:block;}
-.god-only{display:none;}
+.god-only{display:none !important;}.god-only.visible{display:block !important;}.god-only.visible-btn{display:inline-flex !important;}
 
 /* ── SETUP GUIDE ── */
 .setup-box{background:var(--bg2);border:0.5px solid var(--border2);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.25rem;}
@@ -498,7 +498,10 @@ function startSession(user) {
   rtag.className = 'role-tag ' + (user.role === 'god' ? 'role-god' : 'role-agent');
 
   if (user.role === 'god') {
-    document.querySelectorAll('.god-only').forEach(el => el.style.display = '');
+    document.querySelectorAll('.god-only').forEach(el => {
+      if (el.tagName === 'BUTTON') el.classList.add('visible-btn');
+      else el.classList.add('visible');
+    });
     loadCfgInputs();
     loadRoleManager();
   }
