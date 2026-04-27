@@ -556,6 +556,9 @@ document.getElementById('login-user').addEventListener('keydown', e => { if(e.ke
 // ═══════════════════════════════════════════
 let currentPage = 'home';
 function showPage(p) {
+  // Block god mode access for non-god users
+  if (p === 'godmode' && (!SESSION || SESSION.role !== 'god')) return;
+  
   ['home','calendar','ot','agents','links','bcp','godmode'].forEach(function(name) {
     var el = document.getElementById('page-'+name);
     if (el) el.style.display = 'none';
