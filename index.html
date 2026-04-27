@@ -475,7 +475,7 @@ function doLogin() {
   // Try cached sheet users first
   const found = DATA.users.find(r => r.username === u && r.password === p);
   if (found) {
-    startSession({ username: found.username, display_name: found.display_name || found.username, role: found.role || 'agent' });
+    startSession({ username: found.username, display_name: found.display_name || found.username, role: (found.role || 'agent').toLowerCase() });
     return;
   }
 
@@ -485,7 +485,7 @@ function doLogin() {
     fetchCSV(CFG.users).then(rows => {
       DATA.users = rows;
       const match = rows.find(r => r.username === u && r.password === p);
-      if (match) startSession({ username: match.username, display_name: match.display_name || match.username, role: match.role || 'agent' });
+      if (match) startSession({ username: match.username, display_name: match.display_name || match.username, role: (match.role || 'agent').toLowerCase() });
       else errEl.textContent = 'Invalid username or password.';
     });
   } else {
@@ -506,9 +506,9 @@ function startSession(user) {
   document.getElementById('user-display-name').textContent = user.display_name;
   const rtag = document.getElementById('user-role-tag');
   rtag.textContent = user.role;
-  rtag.className = 'role-tag ' + (user.role === 'god' ? 'role-god' : 'role-agent');
+  rtag.className = 'role-tag ' + ((user.role||'').toLowerCase() === 'god' ? 'role-god' : 'role-agent');
 
-  if (user.role === 'god') {
+  if ((user.role || '').toLowerCase() === 'god') {
     document.getElementById('godmode-nav-btn').classList.add('show-god');
     loadCfgInputs();
     loadRoleManager();
@@ -542,7 +542,7 @@ document.getElementById('login-user').addEventListener('keydown', e => { if(e.ke
 let currentPage = 'home';
 function showPage(p) {
   // Block god mode access for non-god users
-  if (p === 'godmode' && (!SESSION || SESSION.role !== 'god')) return;
+  if (p === 'godmode' && (!SESSION || (SESSION.role||'').toLowerCase() !== 'god')) return;
   
   ['home','calendar','ot','agents','links','bcp','godmode'].forEach(function(name) {
     var el = document.getElementById('page-'+name);
