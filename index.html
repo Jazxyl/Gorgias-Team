@@ -799,23 +799,34 @@ function filterAgents() {
 //  GOD MODE — CONFIG & ROLE MANAGER
 // ═══════════════════════════════════════════
 function loadCfgInputs() {
+  // Re-read from localStorage in case CFG was updated elsewhere
+  CFG = JSON.parse(localStorage.getItem('teamhub_cfg') || '{}');
   ['users','agents','leaves','ot','announcements'].forEach(k => {
     const el = document.getElementById('cfg-'+k);
-    if (el && CFG[k]) el.value = CFG[k];
+    if (el) el.value = CFG[k] || '';
   });
 }
 
 function saveConfig() {
   ['users','agents','leaves','ot','announcements'].forEach(k => {
     const el = document.getElementById('cfg-'+k);
-    if (el && el.value.trim()) CFG[k] = el.value.trim();
+    if (el) {
+      const val = el.value.trim();
+      if (val) CFG[k] = val;
+    }
   });
   localStorage.setItem('teamhub_cfg', JSON.stringify(CFG));
-  document.getElementById('cfg-status').textContent = '✓ Saved! Reloading data...';
+  
+  // Verify it actually saved
+  const saved = JSON.parse(localStorage.getItem('teamhub_cfg') || '{}');
+  const savedKeys = Object.keys(saved).filter(k => saved[k]);
+  document.getElementById('cfg-status').textContent = `✓ Saved ${savedKeys.length}/5 sheets. Reloading...`;
+  
   loadAllData().then(() => {
     renderRoleManager();
-    document.getElementById('cfg-status').textContent = '✓ Connected & data loaded.';
-    setTimeout(() => document.getElementById('cfg-status').textContent = '', 3000);
+    const keys = savedKeys.join(', ');
+    document.getElementById('cfg-status').textContent = `✓ Connected: ${keys}`;
+    setTimeout(() => document.getElementById('cfg-status').textContent = '', 5000);
   });
 }
 
