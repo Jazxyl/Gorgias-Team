@@ -420,25 +420,44 @@ let DATA = { users:[], agents:[], leaves:[], ot:[], announcements:[] };
 //  CSV PARSER
 // ═══════════════════════════════════════════
 function parseCSV(text) {
-  // Strip BOM if present
   text = text.replace(/^\uFEFF/, '');
-  const lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return [];
-  // Clean headers: remove quotes, trim, lowercase
-  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g,'').toLowerCase().trim());
-  return lines.slice(1).map(line => {
+  const rawLines = text.trim().split(/\r?\n/);
+  
+  // Parse a single CSV line handling quoted fields
+  function parseLine(line) {
     const vals = [];
     let cur = '', inQ = false;
     for (let c of line) {
       if (c === '"') { inQ = !inQ; }
-      else if (c === ',' && !inQ) { vals.push(cur.trim()); cur = ''; }
+      else if (c === ',' && !inQ) { vals.push(cur.trim().replace(/^"|"$/g,'')); cur = ''; }
       else cur += c;
     }
-    vals.push(cur.trim());
+    vals.push(cur.trim().replace(/^"|"$/g,''));
+    return vals;
+  }
+
+  // Known header keywords to detect the real header row
+  const headerKeywords = ['username','name','title','date','type','status','hours','body','email','role','password'];
+  
+  // Find the header row index
+  let headerIdx = 0;
+  for (let i = 0; i < Math.min(rawLines.length, 5); i++) {
+    const lower = rawLines[i].toLowerCase();
+    const matches = headerKeywords.filter(k => lower.includes(k)).length;
+    if (matches >= 2) { headerIdx = i; break; }
+  }
+
+  const headers = parseLine(rawLines[headerIdx]).map(h => h.toLowerCase().trim());
+  
+  return rawLines.slice(headerIdx + 1).map(line => {
+    if (!line.trim()) return null;
+    const vals = parseLine(line);
+    // Skip warning/note rows (start with ⚠ or emoji)
+    if (vals[0] && (vals[0].startsWith('\u26a0') || vals[0].startsWith('⚠'))) return null;
     const obj = {};
-    headers.forEach((h, i) => obj[h] = (vals[i] || '').replace(/^"|"$/g,'').trim());
+    headers.forEach((h, i) => obj[h] = (vals[i] || '').trim());
     return obj;
-  }).filter(r => Object.values(r).some(v => v));
+  }).filter(r => r && Object.values(r).some(v => v));
 }
 
 async function fetchCSV(url) {
@@ -675,7 +694,7 @@ function renderOT() {
         <td>${r.name||'—'}</td>
         <td>${r.date||'—'}</td>
         <td><strong>${parseFloat(r.hours||0).toFixed(1)}h</strong></td>
-        <td style="color:var(--text2);">${r.reason||'—'}</td>
+        <td style="color:var(--text2);">${r.reason||r.status||'—'}</td>
         <td>${statusBadge(r.status)}</td>
       </tr>`).join('');
   }
@@ -720,19 +739,23 @@ function displayAgents(list) {
     const [bg, fg] = PALETTE[i % PALETTE.length];
     const initials = (a.name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
     const statusCls = (a.status||'').toLowerCase()==='active' ? 'b-green' : (a.status||'').toLowerCase().includes('leave') ? 'b-amber' : 'b-blue';
+    const hubstaffId = a['hubstaff id'] || '';
+    const birthdate = a['birthdate'] || '';
+    const startDate = a['start_date'] || '';
     return `<div class="profile-card">
       <div class="p-avatar" style="background:${bg};color:${fg};">${initials}</div>
       <div class="p-name">${a.name||'—'}</div>
       <div class="p-role">${a.role||'—'}</div>
       <div class="p-tags">
         <span class="badge ${statusCls}">${a.status||'Active'}</span>
-        ${a.level ? `<span class="badge b-blue">${a.level}</span>` : ''}
         ${a.team ? `<span class="badge b-purple">${a.team}</span>` : ''}
       </div>
       <div class="p-detail">
-        ${a.shift ? `<div>Shift <span>${a.shift}</span></div>` : ''}
         ${a.email ? `<div>Email <span>${a.email}</span></div>` : ''}
         ${a.phone ? `<div>Phone <span>${a.phone}</span></div>` : ''}
+        ${birthdate ? `<div>Birthday <span>${birthdate}</span></div>` : ''}
+        ${startDate ? `<div>Start Date <span>${startDate}</span></div>` : ''}
+        ${hubstaffId ? `<div>Hubstaff ID <span>${hubstaffId}</span></div>` : ''}
       </div>
     </div>`;
   }).join('');
