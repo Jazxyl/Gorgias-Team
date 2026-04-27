@@ -403,9 +403,16 @@ input[type=text],input[type=password]{caret-color:var(--blue);}
 //  CONFIG — persisted in localStorage
 // ═══════════════════════════════════════════
 
-const DEFAULT_USERS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=1588987299&single=true&output=csv';
+const DEFAULTS = {
+  users:         'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=1588987299&single=true&output=csv',
+  agents:        'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=450581324&single=true&output=csv',
+  leaves:        'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=106873471&single=true&output=csv',
+  ot:            'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=600018604&single=true&output=csv',
+  announcements: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=616452407&single=true&output=csv'
+};
 let CFG = JSON.parse(localStorage.getItem('teamhub_cfg') || '{}');
-if (!CFG.users) CFG.users = DEFAULT_USERS_URL;
+// Fill in any missing URLs from defaults
+Object.keys(DEFAULTS).forEach(k => { if (!CFG[k]) CFG[k] = DEFAULTS[k]; });
 let SESSION = JSON.parse(localStorage.getItem('teamhub_session') || 'null');
 
 // cached sheet data
