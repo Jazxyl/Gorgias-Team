@@ -510,10 +510,14 @@ function startSession(user) {
   rtag.textContent = user.role;
   rtag.className = 'role-tag ' + ((user.role||'').toLowerCase() === 'god' ? 'role-god' : 'role-agent');
 
+  const godBtn = document.getElementById('godmode-nav-btn');
   if ((user.role || '').toLowerCase() === 'god') {
-    document.getElementById('godmode-nav-btn').classList.add('show-god');
+    godBtn.classList.add('show-god');
     loadCfgInputs();
     loadRoleManager();
+  } else {
+    godBtn.classList.remove('show-god');
+    godBtn.style.display = 'none';
   }
 
   // Set month filter
