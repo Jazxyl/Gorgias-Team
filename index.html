@@ -343,6 +343,7 @@ input[type=text],input[type=password]{caret-color:var(--blue);}
       <div class="setup-box">
         <h3>⚙ Google Sheets Configuration</h3>
         <p style="font-size:13px;color:var(--text2);margin-bottom:1rem;">Paste your published CSV links below. In Google Sheets: File → Share → Publish to web → select sheet → CSV → Publish.</p>
+        <div id="cfg-saved-status" style="background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:1rem;font-size:12px;"></div>
         <div class="setup-step">
           <div class="setup-num">1</div>
           <div class="setup-text">
@@ -413,7 +414,7 @@ const GOD_USER = 'admin';
 const GOD_PASS = 'changeme123';
 
 let CFG = JSON.parse(localStorage.getItem('teamhub_cfg') || '{}');
-let SESSION = JSON.parse(sessionStorage.getItem('teamhub_session') || 'null');
+let SESSION = JSON.parse(localStorage.getItem('teamhub_session') || 'null');
 
 // cached sheet data
 let DATA = { users:[], agents:[], leaves:[], ot:[], announcements:[] };
@@ -509,7 +510,7 @@ function doLogin() {
 
 function startSession(user) {
   SESSION = user;
-  sessionStorage.setItem('teamhub_session', JSON.stringify(user));
+  localStorage.setItem('teamhub_session', JSON.stringify(user));
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
   document.getElementById('app').style.flexDirection = 'column';
@@ -539,7 +540,7 @@ function startSession(user) {
 
 function doLogout() {
   SESSION = null;
-  sessionStorage.removeItem('teamhub_session');
+  localStorage.removeItem('teamhub_session');
   document.getElementById('app').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('login-user').value = '';
@@ -799,12 +800,20 @@ function filterAgents() {
 //  GOD MODE — CONFIG & ROLE MANAGER
 // ═══════════════════════════════════════════
 function loadCfgInputs() {
-  // Re-read from localStorage in case CFG was updated elsewhere
   CFG = JSON.parse(localStorage.getItem('teamhub_cfg') || '{}');
   ['users','agents','leaves','ot','announcements'].forEach(k => {
     const el = document.getElementById('cfg-'+k);
     if (el) el.value = CFG[k] || '';
   });
+  const statusEl = document.getElementById('cfg-saved-status');
+  if (statusEl) {
+    const keys = ['users','agents','leaves','ot','announcements'];
+    const saved = keys.filter(k => CFG[k]);
+    const missing = keys.filter(k => !CFG[k]);
+    statusEl.innerHTML = saved.length
+      ? `<span style="color:var(--green);">✓ Saved: ${saved.join(', ')}</span>${missing.length ? ` &nbsp;|&nbsp; <span style="color:var(--amber);">⚠ Missing: ${missing.join(', ')}</span>` : ''}`
+      : `<span style="color:var(--amber);">⚠ No sheets connected yet. Paste your CSV links below.</span>`;
+  }
 }
 
 function saveConfig() {
