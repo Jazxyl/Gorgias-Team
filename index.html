@@ -147,7 +147,7 @@ tr:hover td{background:var(--bg3);}
 
 /* ── HIDDEN ── */
 .page{display:none;}.page.active{display:block;}
-.god-only{display:none !important;}.god-only.visible{display:block !important;}.god-only.visible-btn{display:inline-flex !important;}
+.god-only{display:none !important;}.show-god{display:inline-flex !important;}
 
 /* ── SETUP GUIDE ── */
 .setup-box{background:var(--bg2);border:0.5px solid var(--border2);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.25rem;}
@@ -420,9 +420,12 @@ let DATA = { users:[], agents:[], leaves:[], ot:[], announcements:[] };
 //  CSV PARSER
 // ═══════════════════════════════════════════
 function parseCSV(text) {
-  const lines = text.trim().split('\n');
+  // Strip BOM if present
+  text = text.replace(/^\uFEFF/, '');
+  const lines = text.trim().split(/\r?\n/);
   if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g,''));
+  // Clean headers: remove quotes, trim, lowercase
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g,'').toLowerCase().trim());
   return lines.slice(1).map(line => {
     const vals = [];
     let cur = '', inQ = false;
@@ -433,7 +436,7 @@ function parseCSV(text) {
     }
     vals.push(cur.trim());
     const obj = {};
-    headers.forEach((h, i) => obj[h] = (vals[i] || '').replace(/^"|"$/g,''));
+    headers.forEach((h, i) => obj[h] = (vals[i] || '').replace(/^"|"$/g,'').trim());
     return obj;
   }).filter(r => Object.values(r).some(v => v));
 }
@@ -498,10 +501,7 @@ function startSession(user) {
   rtag.className = 'role-tag ' + (user.role === 'god' ? 'role-god' : 'role-agent');
 
   if (user.role === 'god') {
-    document.querySelectorAll('.god-only').forEach(el => {
-      if (el.tagName === 'BUTTON') el.classList.add('visible-btn');
-      else el.classList.add('visible');
-    });
+    document.getElementById('godmode-nav-btn').classList.add('show-god');
     loadCfgInputs();
     loadRoleManager();
   }
@@ -535,7 +535,8 @@ let currentPage = 'home';
 function showPage(p) {
   document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-  document.getElementById('page-'+p).classList.add('active');
+  const pageEl = document.getElementById('page-'+p);
+  if (pageEl) { pageEl.style.display = 'block'; pageEl.classList.add('active'); }
   document.querySelectorAll('.nav-btn').forEach(btn => {
     if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes("'"+p+"'")) btn.classList.add('active');
   });
