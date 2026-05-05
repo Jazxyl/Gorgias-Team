@@ -569,6 +569,7 @@ function showPage(p) {
   currentPage = p;
   if (p === 'calendar') renderCalendar();
   if (p === 'ot') renderOT();
+  if (p === 'links') renderLinks();
 }
 
 // ═══════════════════════════════════════════
@@ -907,7 +908,7 @@ function getLinkIcon(name, url) {
 // ── RENDER LINKS ──
 function renderLinks() {
   const container = document.getElementById('links-container');
-  if (!container) return;
+  if (!container) { setTimeout(renderLinks, 100); return; }
 
   if (!DATA.links.length) {
     container.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:1rem;">No links loaded. Add a Links sheet in God Mode.</div>';
