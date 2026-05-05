@@ -1258,101 +1258,106 @@ function renderDashboard() {
 // ── WEEKLY EXTRAS ──
 function renderWeeklyExtras(week) {
   const isGod = SESSION && (SESSION.role||'').toLowerCase() === 'god';
-  const currentUser = SESSION ? (SESSION.display_name || SESSION.username) : '';
-  const weekProd = DATA.productivity.filter(r =>
-    r['week'] === week && r['agent name'] && r['agent name'].trim() &&
-    r['avg per hour'] && r['avg per hour'].trim() !== '-' && !isNaN(parseFloat(r['avg per hour']))
-  );
-  const weekQA = DATA.quality.filter(r =>
-    r['week'] === week && r['agent'] && r['agent'].trim() && r['qa_score'] && !isNaN(parseFloat(r['qa_score']))
-  );
+  const currentUser = SESSION ? (SESSION.display_name || SESSION.username || '') : '';
+  const firstName = currentUser.toLowerCase().split(' ')[0];
 
-  // Build combined agent data
-  const allAgents = [...new Set(weekProd.map(r => r['agent name']))].sort();
-  const agentData = allAgents.map(name => {
-    const prodRows = weekProd.filter(r => r['agent name'] === name);
-    const tphVals = prodRows.map(r => parseFloat(r['avg per hour'])).filter(v => !isNaN(v) && v > 0);
-    const tph = tphVals.length ? tphVals.reduce((a,b)=>a+b,0)/tphVals.length : null;
+  const weekProd = DATA.productivity.filter(function(r) {
+    return r['week'] === week && r['agent name'] && r['agent name'].trim() &&
+      r['avg per hour'] && r['avg per hour'].trim() !== '-' && !isNaN(parseFloat(r['avg per hour']));
+  });
+  const weekQA = DATA.quality.filter(function(r) {
+    return r['week'] === week && r['agent'] && r['agent'].trim() && r['qa_score'] && !isNaN(parseFloat(r['qa_score']));
+  });
 
-    const qaRows = weekQA.filter(r => r['agent'] === name);
-    const qaVals = qaRows.map(r => parseFloat(r['qa_score'])).filter(v => !isNaN(v));
-    const qa = qaVals.length ? qaVals.reduce((a,b)=>a+b,0)/qaVals.length : null;
+  const allAgents = [...new Set(weekProd.map(function(r){ return r['agent name']; }))].sort();
 
-    return { name, tph, qa };
+  const agentData = allAgents.map(function(name) {
+    const prodRows = weekProd.filter(function(r){ return r['agent name'] === name; });
+    const tphVals = prodRows.map(function(r){ return parseFloat(r['avg per hour']); }).filter(function(v){ return !isNaN(v) && v > 0; });
+    const tph = tphVals.length ? tphVals.reduce(function(a,b){return a+b;},0)/tphVals.length : null;
+    const qaRows = weekQA.filter(function(r){ return r['agent'] === name; });
+    const qaVals = qaRows.map(function(r){ return parseFloat(r['qa_score']); }).filter(function(v){ return !isNaN(v); });
+    const qa = qaVals.length ? qaVals.reduce(function(a,b){return a+b;},0)/qaVals.length : null;
+    return { name: name, tph: tph, qa: qa };
   });
 
   // ── RANKINGS ──
   const rankingsEl = document.getElementById('weekly-rankings');
-  if (rankingsEl) {
-    // Rank by combined score: normalize TPH (target 2.0) and QA (target 90) equally
-    const ranked = [...agentData]
-      .filter(a => a.tph !== null || a.qa !== null)
-      .map(a => {
+  if (rankingsEl && agentData.length) {
+    const medals = ['🥇','🥈','🥉'];
+    const ranked = agentData.filter(function(a){ return a.tph !== null || a.qa !== null; })
+      .map(function(a) {
         const tphScore = a.tph ? Math.min(a.tph / 2.0 * 50, 60) : 0;
         const qaScore = a.qa ? Math.min(a.qa / 100 * 50, 50) : 0;
-        return { ...a, combined: tphScore + qaScore };
+        return { name: a.name, tph: a.tph, qa: a.qa, combined: tphScore + qaScore };
       })
-      .sort((a,b) => b.combined - a.combined);
+      .sort(function(a,b){ return b.combined - a.combined; });
 
-    const medals = ['🥇','🥈','🥉'];
-    rankingsEl.innerHTML = `<table class="dash-table">
-      <thead><tr><th>#</th><th>Agent</th><th>TPH</th><th>QA</th><th>Score</th></tr></thead>
-      <tbody>
-        ${ranked.map((a, i) => {
-          const delay = (i * 0.05).toFixed(2);
-          const tphC = a.tph ? (a.tph >= 2.0 ? '#3ecf8e' : a.tph >= 1.7 ? '#f5a623' : '#f05252') : 'var(--text3)';
-          const qaC = a.qa ? (a.qa >= 90 ? '#3ecf8e' : a.qa >= 85 ? '#f5a623' : '#f05252') : 'var(--text3)';
-          const rank = medals[i] || (i+1).toString();
-          const isMe = !isGod && (a.name.toLowerCase().includes(currentUser.toLowerCase().split(' ')[0]) || currentUser.toLowerCase().includes(a.name.toLowerCase().split(' ')[0]));
-          return `<tr class="dash-animate" style="animation-delay:${delay}s;${isMe ? 'background:var(--blue-dim);' : ''}">
-            <td style="font-size:15px">${rank}</td>
-            <td style="font-weight:${isMe?'600':'400'}">${a.name.split(' ')[0]}</td>
-            <td style="color:${tphC};font-weight:500">${a.tph ? a.tph.toFixed(2) : '—'}</td>
-            <td style="color:${qaC};font-weight:500">${a.qa ? a.qa.toFixed(1)+'%' : '—'}</td>
-            <td style="color:var(--text2);font-size:12px">${a.combined.toFixed(0)}</td>
-          </tr>`;
-        }).join('')}
-      </tbody>
-    </table>`;
+    var rows = '';
+    for (var i = 0; i < ranked.length; i++) {
+      var a = ranked[i];
+      var rank = medals[i] || (i+1);
+      var isMe = !isGod && (a.name.toLowerCase().indexOf(firstName) > -1 || firstName.indexOf(a.name.toLowerCase().split(' ')[0]) > -1);
+      var tphC = a.tph ? (a.tph >= 2.0 ? '#3ecf8e' : a.tph >= 1.7 ? '#f5a623' : '#f05252') : 'var(--text3)';
+      var qaC = a.qa ? (a.qa >= 90 ? '#3ecf8e' : a.qa >= 85 ? '#f5a623' : '#f05252') : 'var(--text3)';
+      var bg = isMe ? 'background:var(--bg3);' : '';
+      var fw = isMe ? '600' : '400';
+      var delay = (i * 0.05).toFixed(2);
+      rows += '<tr class="dash-animate" style="animation-delay:' + delay + 's;' + bg + '">'
+        + '<td style="font-size:15px">' + rank + '</td>'
+        + '<td style="font-weight:' + fw + '">' + a.name.split(' ')[0] + '</td>'
+        + '<td style="color:' + tphC + ';font-weight:500">' + (a.tph ? a.tph.toFixed(2) : '—') + '</td>'
+        + '<td style="color:' + qaC + ';font-weight:500">' + (a.qa ? a.qa.toFixed(1) + '%' : '—') + '</td>'
+        + '<td style="color:var(--text2);font-size:12px">' + a.combined.toFixed(0) + '</td>'
+        + '</tr>';
+    }
+    rankingsEl.innerHTML = '<table class="dash-table"><thead><tr><th>#</th><th>Agent</th><th>TPH</th><th>QA</th><th>Score</th></tr></thead><tbody>' + rows + '</tbody></table>';
   }
 
   // ── SCORECARD ──
   const scorecardEl = document.getElementById('weekly-scorecard');
   if (scorecardEl) {
-    let agents = isGod ? agentData : agentData.filter(a =>
-      a.name.toLowerCase().includes(currentUser.toLowerCase().split(' ')[0]) ||
-      currentUser.toLowerCase().includes(a.name.toLowerCase().split(' ')[0])
-    );
+    var agents = isGod ? agentData : agentData.filter(function(a){
+      return a.name.toLowerCase().indexOf(firstName) > -1 || firstName.indexOf(a.name.toLowerCase().split(' ')[0]) > -1;
+    });
     if (!isGod && !agents.length) agents = agentData.slice(0, 1);
 
-    scorecardEl.innerHTML = agents.map(a => {
-      const tphColor = a.tph ? (a.tph >= 2.0 ? '#3ecf8e' : a.tph >= 1.7 ? '#f5a623' : '#f05252') : 'var(--text3)';
-      const qaColor = a.qa ? (a.qa >= 90 ? '#3ecf8e' : a.qa >= 85 ? '#f5a623' : '#f05252') : 'var(--text3)';
-      const tphDiff = a.tph ? (a.tph - 2.0).toFixed(2) : null;
-      const qaDiff = a.qa ? (a.qa - 90).toFixed(1) : null;
-      const tphStatus = a.tph ? (a.tph >= 2.0 ? '✓ On target' : '✗ Below target') : 'No data';
-      const qaStatus = a.qa ? (a.qa >= 90 ? '✓ On target' : '✗ Below target') : 'No evaluations';
+    var cards = '';
+    for (var j = 0; j < agents.length; j++) {
+      var ag = agents[j];
+      var tphColor = ag.tph ? (ag.tph >= 2.0 ? '#3ecf8e' : ag.tph >= 1.7 ? '#f5a623' : '#f05252') : 'var(--text3)';
+      var qaColor = ag.qa ? (ag.qa >= 90 ? '#3ecf8e' : ag.qa >= 85 ? '#f5a623' : '#f05252') : 'var(--text3)';
+      var tphDiff = ag.tph ? (ag.tph - 2.0).toFixed(2) : null;
+      var qaDiff = ag.qa ? (ag.qa - 90).toFixed(1) : null;
+      var tphDiffStr = tphDiff !== null ? (parseFloat(tphDiff) >= 0 ? '+' + tphDiff : tphDiff) + ' vs target' : '';
+      var qaDiffStr = qaDiff !== null ? (parseFloat(qaDiff) >= 0 ? '+' + qaDiff : qaDiff) + '% vs target' : '';
+      var tphDiffColor = tphDiff !== null ? (parseFloat(tphDiff) >= 0 ? '#3ecf8e' : '#f05252') : 'var(--text3)';
+      var qaDiffColor = qaDiff !== null ? (parseFloat(qaDiff) >= 0 ? '#3ecf8e' : '#f05252') : 'var(--text3)';
+      var tphStatus = ag.tph ? (ag.tph >= 2.0 ? '✓ On target' : '✗ Below target') : 'No data';
+      var qaStatus = ag.qa ? (ag.qa >= 90 ? '✓ On target' : '✗ Below target') : 'No evaluations';
+      var header = isGod ? '<div class="glide-agent-header">' + ag.name + '</div>' : '';
+      var mb = isGod ? '12' : '0';
 
-      const agentHeader = isGod ? '<div class="glide-agent-header">' + a.name + '</div>' : '';
-      const mbVal = isGod ? '12' : '0';
-      return agentHeader + `
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:${mbVal}px;">
-          <div style="background:var(--bg3);border-radius:var(--radius);padding:10px 12px;">
-            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">TPH</div>
-            <div style="font-size:22px;font-weight:500;color:${tphColor}">${a.tph ? a.tph.toFixed(2) : '—'}</div>
-            <div style="font-size:11px;color:${tphDiff >= 0 ? '#3ecf8e' : '#f05252'};margin-top:2px">${tphDiff !== null ? (tphDiff >= 0 ? '+'+tphDiff : tphDiff)+' vs target' : ''}</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:1px">${tphStatus}</div>
-          </div>
-          <div style="background:var(--bg3);border-radius:var(--radius);padding:10px 12px;">
-            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">QA Score</div>
-            <div style="font-size:22px;font-weight:500;color:${qaColor}">${a.qa ? a.qa.toFixed(1)+'%' : '—'}</div>
-            <div style="font-size:11px;color:${qaDiff >= 0 ? '#3ecf8e' : '#f05252'};margin-top:2px">${qaDiff !== null ? (qaDiff >= 0 ? '+'+qaDiff : qaDiff)+'% vs target' : ''}</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:1px">${qaStatus}</div>
-          </div>
-        </div>`;
-    }).join('') || '<div style="color:var(--text2);font-size:13px;">No data for this week.</div>';
+      cards += header
+        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:' + mb + 'px;">'
+        + '<div style="background:var(--bg3);border-radius:var(--radius);padding:10px 12px;">'
+        + '<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">TPH</div>'
+        + '<div style="font-size:22px;font-weight:500;color:' + tphColor + '">' + (ag.tph ? ag.tph.toFixed(2) : '—') + '</div>'
+        + '<div style="font-size:11px;color:' + tphDiffColor + ';margin-top:2px">' + tphDiffStr + '</div>'
+        + '<div style="font-size:11px;color:var(--text3);margin-top:1px">' + tphStatus + '</div>'
+        + '</div>'
+        + '<div style="background:var(--bg3);border-radius:var(--radius);padding:10px 12px;">'
+        + '<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">QA Score</div>'
+        + '<div style="font-size:22px;font-weight:500;color:' + qaColor + '">' + (ag.qa ? ag.qa.toFixed(1) + '%' : '—') + '</div>'
+        + '<div style="font-size:11px;color:' + qaDiffColor + ';margin-top:2px">' + qaDiffStr + '</div>'
+        + '<div style="font-size:11px;color:var(--text3);margin-top:1px">' + qaStatus + '</div>'
+        + '</div>'
+        + '</div>';
+    }
+    scorecardEl.innerHTML = cards || '<div style="color:var(--text2);font-size:13px;">No data for this week.</div>';
   }
 }
+
 
 // ── GLIDE PATH ──
 let tphChartInstance = null;
