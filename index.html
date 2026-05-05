@@ -1207,14 +1207,14 @@ function renderDashboard() {
   if (bottomEl) {
     if (!isWeekly) {
       bottomEl.innerHTML = `
-      <div class="glide-section">
+      <div class="glide-section dash-animate" style="animation-delay:0.1s">
         <div class="dash-card-title" style="margin-bottom:1rem;">📈 Glide Path — Week by Week (Month ${DASH_FILTER.month})</div>
         <div class="glide-grid">
-          <div class="glide-card">
+          <div class="glide-card dash-animate dash-animate-2">
             <div class="glide-title">⚡ TPH Trend</div>
             <div class="glide-chart-wrap"><canvas id="tph-chart"></canvas></div>
           </div>
-          <div class="glide-card">
+          <div class="glide-card dash-animate dash-animate-3">
             <div class="glide-title">🎯 QA Score Trend</div>
             <div id="qa-trend-table"></div>
           </div>
@@ -1222,9 +1222,10 @@ function renderDashboard() {
       </div>`;
     } else {
       const scorecardTitle = isGodMode ? 'Team Scorecard' : 'My Scorecard';
-      const weeklyHTML = '<div class="glide-section"><div class="glide-grid">'
-        + '<div class="glide-card"><div class="glide-title">🏆 Team Rankings — Week ' + DASH_FILTER.week + '</div><div id="weekly-rankings"></div></div>'
-        + '<div class="glide-card"><div class="glide-title">📋 ' + scorecardTitle + '</div><div id="weekly-scorecard"></div></div>'
+      const weeklyHTML = '<div class="glide-section dash-animate" style="animation-delay:0.1s">'
+        + '<div class="glide-grid">'
+        + '<div class="glide-card dash-animate dash-animate-2"><div class="glide-title">🏆 Team Rankings — Week ' + DASH_FILTER.week + '</div><div id="weekly-rankings"></div></div>'
+        + '<div class="glide-card dash-animate dash-animate-3"><div class="glide-title">📋 ' + scorecardTitle + '</div><div id="weekly-scorecard"></div></div>'
         + '</div></div>';
       bottomEl.innerHTML = weeklyHTML;
     }
@@ -1298,7 +1299,7 @@ function renderWeeklyExtras(week) {
           const qaC = a.qa ? (a.qa >= 90 ? '#3ecf8e' : a.qa >= 85 ? '#f5a623' : '#f05252') : 'var(--text3)';
           const rank = medals[i] || `${i+1}`;
           const isMe = !isGod && (a.name.toLowerCase().includes(currentUser.toLowerCase().split(' ')[0]) || currentUser.toLowerCase().includes(a.name.toLowerCase().split(' ')[0]));
-          return `<tr style="${isMe ? 'background:var(--blue-dim);' : ''}">
+          return `<tr class="dash-animate" style="animation-delay:${delay}s;${isMe ? 'background:var(--blue-dim);' : ''}">
             <td style="font-size:15px">${rank}</td>
             <td style="font-weight:${isMe?'600':'400'}">${a.name.split(' ')[0]}</td>
             <td style="color:${tphC};font-weight:500">${a.tph ? a.tph.toFixed(2) : '—'}</td>
