@@ -162,6 +162,14 @@ tr:hover td{background:var(--bg3);}
 input[type=text],input[type=password]{caret-color:var(--blue);}
 
 /* ── DASHBOARD ── */
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes barGrow{from{width:0%;}to{width:var(--bar-width);}}
+.dash-animate{animation:fadeSlideIn 0.35s ease forwards;opacity:0;}
+.dash-animate-1{animation-delay:0.05s;}
+.dash-animate-2{animation-delay:0.10s;}
+.dash-animate-3{animation-delay:0.15s;}
+.dash-animate-4{animation-delay:0.20s;}
+.dash-bar-animated{animation:barGrow 0.6s cubic-bezier(0.4,0,0.2,1) forwards;width:0%;}
 .custom-select{position:relative;display:inline-block;}
 .custom-select-btn{padding:6px 28px 6px 10px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;cursor:pointer;min-width:100px;position:relative;user-select:none;}
 .custom-select-btn::after{content:'▾';position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text2);}
@@ -1096,24 +1104,24 @@ function renderDashboard() {
   content.innerHTML = `
     <!-- Summary cards -->
     <div class="dash-summary">
-      <div class="dash-summary-card">
+      <div class="dash-summary-card dash-animate dash-animate-1">
         <div class="dash-summary-label">Avg TPH</div>
-        <div class="dash-summary-val" style="color:${parseFloat(avgTPH)>=2?'#3ecf8e':parseFloat(avgTPH)>=1.7?'#f5a623':'#f05252'}">${avgTPH}</div>
+        <div class="dash-summary-val" id="anim-avg-tph" style="color:${parseFloat(avgTPH)>=2?'#3ecf8e':parseFloat(avgTPH)>=1.7?'#f5a623':'#f05252'}">0</div>
         <div class="dash-summary-sub">Target: 2.0</div>
       </div>
-      <div class="dash-summary-card">
+      <div class="dash-summary-card dash-animate dash-animate-2">
         <div class="dash-summary-label">At/Above TPH Target</div>
-        <div class="dash-summary-val">${aboveTPH}<span style="font-size:14px;color:var(--text2)"> / ${prodVals.length}</span></div>
+        <div class="dash-summary-val"><span id="anim-above-tph">0</span><span style="font-size:14px;color:var(--text2)"> / ${prodVals.length}</span></div>
         <div class="dash-summary-sub">agents meeting 2.0+</div>
       </div>
-      <div class="dash-summary-card">
+      <div class="dash-summary-card dash-animate dash-animate-3">
         <div class="dash-summary-label">Avg QA Score</div>
-        <div class="dash-summary-val" style="color:${parseFloat(avgQA)>=90?'#3ecf8e':parseFloat(avgQA)>=85?'#f5a623':'#f05252'}">${avgQA}%</div>
+        <div class="dash-summary-val" id="anim-avg-qa" style="color:${parseFloat(avgQA)>=90?'#3ecf8e':parseFloat(avgQA)>=85?'#f5a623':'#f05252'}">0%</div>
         <div class="dash-summary-sub">Target: 90%</div>
       </div>
-      <div class="dash-summary-card">
+      <div class="dash-summary-card dash-animate dash-animate-4">
         <div class="dash-summary-label">At/Above QA Target</div>
-        <div class="dash-summary-val">${aboveQA}<span style="font-size:14px;color:var(--text2)"> / ${qaVals.length}</span></div>
+        <div class="dash-summary-val"><span id="anim-above-qa">0</span><span style="font-size:14px;color:var(--text2)"> / ${qaVals.length}</span></div>
         <div class="dash-summary-sub">agents meeting 90%+</div>
       </div>
     </div>
@@ -1138,7 +1146,7 @@ function renderDashboard() {
                 <td><span class="dash-score" style="color:${fg};background:${bg}">${tph.toFixed(2)}</span></td>
                 <td style="width:120px">
                   <div style="font-size:11px;color:${+diff>=0?'#3ecf8e':'#f05252'};font-weight:500">${diffStr}</div>
-                  <div class="dash-bar-wrap"><div class="dash-bar" style="width:${pct}%;background:${fg}"></div></div>
+                  <div class="dash-bar-wrap"><div class="dash-bar dash-bar-animated" style="--bar-width:${pct}%;background:${fg}"></div></div>
                 </td>
               </tr>`;
             }).join('')}
@@ -1164,7 +1172,7 @@ function renderDashboard() {
                 <td><span class="dash-score" style="color:${fg};background:${bg}">${qa.toFixed(1)}%</span></td>
                 <td style="width:120px">
                   <div style="font-size:11px;color:${+diff>=0?'#3ecf8e':'#f05252'};font-weight:500">${diffStr}%</div>
-                  <div class="dash-bar-wrap"><div class="dash-bar" style="width:${pct}%;background:${fg}"></div></div>
+                  <div class="dash-bar-wrap"><div class="dash-bar dash-bar-animated" style="--bar-width:${pct}%;background:${fg}"></div></div>
                 </td>
               </tr>`;
             }).join('')}
@@ -1175,6 +1183,30 @@ function renderDashboard() {
 
     ${(!prodVals.length && !qaVals.length) ? '<div style="color:var(--text2);font-size:13px;padding:1rem;">No data for this period. Connect your sheets in God Mode.</div>' : ''}
   `;
+
+  // Count-up animations
+  requestAnimationFrame(() => {
+    countUp('anim-avg-tph', 0, parseFloat(avgTPH)||0, 600, 2);
+    countUp('anim-above-tph', 0, aboveTPH, 400, 0);
+    countUp('anim-avg-qa', 0, parseFloat(avgQA)||0, 600, 1, '%');
+    countUp('anim-above-qa', 0, aboveQA, 400, 0);
+  });
+}
+
+function countUp(id, from, to, duration, decimals, suffix) {
+  const el = document.getElementById(id);
+  if (!el || isNaN(to)) return;
+  suffix = suffix || '';
+  const start = performance.now();
+  function update(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const ease = 1 - Math.pow(1 - progress, 3);
+    const val = from + (to - from) * ease;
+    el.textContent = val.toFixed(decimals) + suffix;
+    if (progress < 1) requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
 }
 
 function toggleCustomSelect(menuId) {
