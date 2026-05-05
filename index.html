@@ -162,6 +162,15 @@ tr:hover td{background:var(--bg3);}
 input[type=text],input[type=password]{caret-color:var(--blue);}
 
 /* ── DASHBOARD ── */
+.custom-select{position:relative;display:inline-block;}
+.custom-select-btn{padding:6px 28px 6px 10px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;cursor:pointer;min-width:100px;position:relative;user-select:none;}
+.custom-select-btn::after{content:'▾';position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text2);}
+.custom-select-btn:hover{border-color:var(--border2);}
+.custom-select-menu{position:absolute;top:calc(100% + 4px);left:0;min-width:100%;background:var(--bg2);border:0.5px solid var(--border2);border-radius:var(--radius);z-index:999;max-height:200px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,0.4);}
+.custom-select-menu.hidden{display:none;}
+.custom-select-option{padding:7px 12px;font-size:13px;color:var(--text2);cursor:pointer;white-space:nowrap;}
+.custom-select-option:hover{background:var(--bg3);color:var(--text);}
+.custom-select-option.selected{color:var(--blue);font-weight:500;}
 .dash-filters{display:flex;gap:10px;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;}
 .dash-filter-group{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);}
 .dash-select{padding:6px 10px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;cursor:pointer;max-height:36px;}
@@ -1020,18 +1029,24 @@ function renderDashboard() {
       ${DASH_FILTER.type === 'weekly' ? `
       <div class="dash-filter-group">
         <label>Week:</label>
-        <select class="dash-select" id="dash-week" size="1" onchange="DASH_FILTER.week=this.value;renderDashboard()">
-          ${weeks.map(w => `<option value="${w}" ${DASH_FILTER.week===w?'selected':''}>Week ${w}</option>`).join('')}
-        </select>
+        <div class="custom-select" id="week-select-wrap">
+          <div class="custom-select-btn" onclick="toggleCustomSelect('week-select-menu')">Week ${DASH_FILTER.week}</div>
+          <div class="custom-select-menu hidden" id="week-select-menu">
+            ${weeks.map(w => `<div class="custom-select-option ${DASH_FILTER.week===w?'selected':''}" onclick="DASH_FILTER.week='${w}';closeCustomSelects();renderDashboard()">Week ${w}</div>`).join('')}
+          </div>
+        </div>
       </div>` : `
       <div class="dash-filter-group">
         <label>Month:</label>
-        <select class="dash-select" id="dash-month" size="1" onchange="DASH_FILTER.month=this.value;renderDashboard()">
-          ${months.map(m => {
-            const names = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-            return `<option value="${m}" ${DASH_FILTER.month===m?'selected':''}>Month ${m} (${names[+m]||m})</option>`;
-          }).join('')}
-        </select>
+        <div class="custom-select" id="month-select-wrap">
+          <div class="custom-select-btn" onclick="toggleCustomSelect('month-select-menu')">${['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+DASH_FILTER.month]||'Month '+DASH_FILTER.month}</div>
+          <div class="custom-select-menu hidden" id="month-select-menu">
+            ${months.map(m => {
+              const names = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+              return `<div class="custom-select-option ${DASH_FILTER.month===m?'selected':''}" onclick="DASH_FILTER.month='${m}';closeCustomSelects();renderDashboard()">${names[+m]||m}</div>`;
+            }).join('')}
+          </div>
+        </div>
       </div>`}
     </div>
     <div id="dash-content"></div>
@@ -1161,6 +1176,18 @@ function renderDashboard() {
     ${(!prodVals.length && !qaVals.length) ? '<div style="color:var(--text2);font-size:13px;padding:1rem;">No data for this period. Connect your sheets in God Mode.</div>' : ''}
   `;
 }
+
+function toggleCustomSelect(menuId) {
+  closeCustomSelects();
+  const menu = document.getElementById(menuId);
+  if (menu) menu.classList.toggle('hidden');
+}
+function closeCustomSelects() {
+  document.querySelectorAll('.custom-select-menu').forEach(m => m.classList.add('hidden'));
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.custom-select')) closeCustomSelects();
+});
 
 function openLink(url) { if(url && url !== '#') window.open(url,'_blank'); }
 
