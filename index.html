@@ -1259,7 +1259,6 @@ function renderDashboard() {
 function renderWeeklyExtras(week) {
   const isGod = SESSION && (SESSION.role||'').toLowerCase() === 'god';
   const currentUser = SESSION ? (SESSION.display_name || SESSION.username) : '';
-
   const weekProd = DATA.productivity.filter(r =>
     r['week'] === week && r['agent name'] && r['agent name'].trim() &&
     r['avg per hour'] && r['avg per hour'].trim() !== '-' && !isNaN(parseFloat(r['avg per hour']))
@@ -1300,6 +1299,7 @@ function renderWeeklyExtras(week) {
       <thead><tr><th>#</th><th>Agent</th><th>TPH</th><th>QA</th><th>Score</th></tr></thead>
       <tbody>
         ${ranked.map((a, i) => {
+          const delay = (i * 0.05).toFixed(2);
           const tphC = a.tph ? (a.tph >= 2.0 ? '#3ecf8e' : a.tph >= 1.7 ? '#f5a623' : '#f05252') : 'var(--text3)';
           const qaC = a.qa ? (a.qa >= 90 ? '#3ecf8e' : a.qa >= 85 ? '#f5a623' : '#f05252') : 'var(--text3)';
           const rank = medals[i] || (i+1).toString();
