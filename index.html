@@ -164,7 +164,7 @@ input[type=text],input[type=password]{caret-color:var(--blue);}
 /* ── DASHBOARD ── */
 .dash-filters{display:flex;gap:10px;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;}
 .dash-filter-group{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);}
-.dash-select{padding:6px 10px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;cursor:pointer;}
+.dash-select{padding:6px 10px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;cursor:pointer;max-height:36px;}
 .dash-select:focus{outline:none;border-color:var(--blue);}
 .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem;}
 .dash-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;}
@@ -1020,13 +1020,13 @@ function renderDashboard() {
       ${DASH_FILTER.type === 'weekly' ? `
       <div class="dash-filter-group">
         <label>Week:</label>
-        <select class="dash-select" id="dash-week" onchange="DASH_FILTER.week=this.value;renderDashboard()">
+        <select class="dash-select" id="dash-week" size="1" onchange="DASH_FILTER.week=this.value;renderDashboard()">
           ${weeks.map(w => `<option value="${w}" ${DASH_FILTER.week===w?'selected':''}>Week ${w}</option>`).join('')}
         </select>
       </div>` : `
       <div class="dash-filter-group">
         <label>Month:</label>
-        <select class="dash-select" id="dash-month" onchange="DASH_FILTER.month=this.value;renderDashboard()">
+        <select class="dash-select" id="dash-month" size="1" onchange="DASH_FILTER.month=this.value;renderDashboard()">
           ${months.map(m => {
             const names = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
             return `<option value="${m}" ${DASH_FILTER.month===m?'selected':''}>Month ${m} (${names[+m]||m})</option>`;
