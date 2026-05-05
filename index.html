@@ -1522,10 +1522,16 @@ function renderWeeklyExtras(week) {
   // ── SCORECARD ──
   const scorecardEl = document.getElementById('weekly-scorecard');
   if (scorecardEl) {
+    var userFirst = currentUser.toLowerCase().split(' ')[0];
+    var agentSheetEntry = DATA.agents.find(function(a){ return (a.username||'').toLowerCase() === (SESSION.username||'').toLowerCase(); });
+    var agentSheetFirst = agentSheetEntry ? (agentSheetEntry.name||'').toLowerCase().split(' ')[0] : '';
     var agents = isGod ? agentData : agentData.filter(function(a){
-      return a.name.toLowerCase().indexOf(firstName) > -1 || firstName.indexOf(a.name.toLowerCase().split(' ')[0]) > -1;
+      var n = a.name.toLowerCase();
+      var nFirst = n.split(' ')[0];
+      return n.indexOf(userFirst) > -1 || userFirst.indexOf(nFirst) > -1 ||
+             (agentSheetFirst && (n.indexOf(agentSheetFirst) > -1 || agentSheetFirst.indexOf(nFirst) > -1));
     });
-    if (!isGod && !agents.length) agents = agentData.slice(0, 1);
+    if (!isGod && !agents.length && agentSheetEntry) agents = [{name: agentSheetEntry.name, tph: null, qa: null}];
 
     var cards = '';
     for (var j = 0; j < agents.length; j++) {
@@ -1591,12 +1597,25 @@ function renderGlidePath(month) {
   if (isGod) {
     agents = [...new Set(monthProd.map(r => r['agent name']))].sort();
   } else {
-    // Match logged-in user to agent name
-    agents = [...new Set(monthProd.map(r => r['agent name']))].filter(name =>
-      name.toLowerCase().includes(currentUser.toLowerCase().split(' ')[0]) ||
-      currentUser.toLowerCase().includes(name.toLowerCase().split(' ')[0])
-    );
-    if (!agents.length) agents = [...new Set(monthProd.map(r => r['agent name']))].slice(0,1);
+    // Match logged-in user to agent name - check display_name, username, and agents sheet
+    const allProdAgents = [...new Set(monthProd.map(r => r['agent name']))];
+    const userLower = currentUser.toLowerCase();
+    // Also try matching against agents sheet name
+    const agentSheetName = (DATA.agents.find(a =>
+      (a.username||'').toLowerCase() === (SESSION.username||'').toLowerCase()
+    ) || {}).name || '';
+    const agentSheetLower = agentSheetName.toLowerCase();
+
+    agents = allProdAgents.filter(name => {
+      const nameLower = name.toLowerCase();
+      const nameFirst = nameLower.split(' ')[0];
+      const userFirst = userLower.split(' ')[0];
+      return nameLower.includes(userFirst) ||
+             userLower.includes(nameFirst) ||
+             (agentSheetLower && (nameLower.includes(agentSheetLower.split(' ')[0]) || agentSheetLower.includes(nameFirst)));
+    });
+    // No fallback to first agent — show empty if no match
+    if (!agents.length && agentSheetName) agents = [agentSheetName];
   }
 
   // Color palette for agents
