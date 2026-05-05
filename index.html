@@ -1196,34 +1196,45 @@ function renderDashboard() {
 
     ${(!prodVals.length && !qaVals.length) ? '<div style="color:var(--text2);font-size:13px;padding:1rem;">No data for this period. Connect your sheets in God Mode.</div>' : ''}
 
-  <!-- Glide Path section (monthly view only) -->
-  ${!isWeekly ? `
-  <div class="glide-section">
-    <div class="dash-card-title" style="margin-bottom:1rem;">📈 Glide Path — Week by Week (Month ${DASH_FILTER.month})</div>
-    <div class="glide-grid">
-      <div class="glide-card">
-        <div class="glide-title">⚡ TPH Trend</div>
-        <div class="glide-chart-wrap"><canvas id="tph-chart"></canvas></div>
-      </div>
-      <div class="glide-card">
-        <div class="glide-title">🎯 QA Score Trend</div>
-        <div id="qa-trend-table"></div>
-      </div>
-    </div>
-  </div>` : `
-  <div class="glide-section">
-    <div class="glide-grid">
-      <div class="glide-card">
-        <div class="glide-title">🏆 Team Rankings — Week ${DASH_FILTER.week}</div>
-        <div id="weekly-rankings"></div>
-      </div>
-      <div class="glide-card">
-        <div class="glide-title">📋 ${isGodMode ? 'Team Scorecard' : 'My Scorecard'}</div>
-        <div id="weekly-scorecard"></div>
-      </div>
-    </div>
-  </div>`}
+  <!-- Bottom section placeholder -->
+  <div id="bottom-section"></div>
   `;
+
+  // Inject bottom section
+  const bottomEl = document.getElementById('bottom-section');
+  if (bottomEl) {
+    if (!isWeekly) {
+      bottomEl.innerHTML = `
+      <div class="glide-section">
+        <div class="dash-card-title" style="margin-bottom:1rem;">📈 Glide Path — Week by Week (Month ${DASH_FILTER.month})</div>
+        <div class="glide-grid">
+          <div class="glide-card">
+            <div class="glide-title">⚡ TPH Trend</div>
+            <div class="glide-chart-wrap"><canvas id="tph-chart"></canvas></div>
+          </div>
+          <div class="glide-card">
+            <div class="glide-title">🎯 QA Score Trend</div>
+            <div id="qa-trend-table"></div>
+          </div>
+        </div>
+      </div>`;
+    } else {
+      const scorecardTitle = isGodMode ? 'Team Scorecard' : 'My Scorecard';
+      bottomEl.innerHTML = `
+      <div class="glide-section">
+        <div class="glide-grid">
+          <div class="glide-card">
+            <div class="glide-title">🏆 Team Rankings — Week ${DASH_FILTER.week}</div>
+            <div id="weekly-rankings"></div>
+          </div>
+          <div class="glide-card">
+            <div class="glide-title">📋 ${scorecardTitle}</div>
+            <div id="weekly-scorecard"></div>
+          </div>
+        </div>
+      </div>`;
+    }
+  }
 
   // Count-up animations
   requestAnimationFrame(() => {
