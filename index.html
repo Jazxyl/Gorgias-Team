@@ -448,16 +448,15 @@ function parseCSV(text) {
   }
 
   // Known header keywords to detect the real header row
-  const headerKeywords = ['username','name','title','date','type','status','hours','body','email','role','password','url','description','category'];
+  const headerKeywords = ['username','name','title','date','type','status','hours','body','email','role','password','url','description','category','agent','week','month','score','reference','weekstart'];
   
-  // Find the header row index - require 3+ matches to avoid title rows
+  // Find the header row — pick row with most keyword matches
   let headerIdx = 0;
+  let bestMatches = 0;
   for (let i = 0; i < Math.min(rawLines.length, 5); i++) {
-    const lower = rawLines[i].toLowerCase();
-    // Count exact column-name matches (comma-separated)
-    const cols = lower.split(',').map(c => c.trim().replace(/^"|"$/g,''));
+    const cols = parseLine(rawLines[i]).map(c => c.toLowerCase().trim());
     const matches = cols.filter(c => headerKeywords.includes(c)).length;
-    if (matches >= 2) { headerIdx = i; break; }
+    if (matches > bestMatches) { bestMatches = matches; headerIdx = i; }
   }
 
   const headers = parseLine(rawLines[headerIdx]).map(h => h.toLowerCase().trim());
@@ -998,8 +997,8 @@ function renderDashboard() {
   if (!container) return;
 
   // Build filter UI
-  const prodData = DATA.productivity.filter(r => r['agent name'] && r['avg per hour'] && r['avg per hour'] !== '-');
-  const qaData = DATA.quality.filter(r => r['agent'] && r['qa_score']);
+  const prodData = DATA.productivity.filter(r => r['agent name'] && r['agent name'].trim() && r['avg per hour'] && r['avg per hour'].trim() !== '-' && r['avg per hour'].trim() !== '' && !isNaN(parseFloat(r['avg per hour'])));
+  const qaData = DATA.quality.filter(r => r['agent'] && r['agent'].trim() && r['qa_score'] && !isNaN(parseFloat(r['qa_score'])));
 
   // Get unique weeks and months from productivity data
   const weeks = [...new Set(prodData.map(r => r['week']).filter(Boolean))].sort((a,b) => +a - +b);
