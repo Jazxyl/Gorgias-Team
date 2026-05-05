@@ -1455,8 +1455,7 @@ function renderPRList(reviews) {
       + '<span class="pr-agent">👤 ' + agent + monthLabel + '</span>'
       + ticketLink
       + '</div>'
-      + '<div class="pr-feedback">' + feedback.replace(/
-/g, '<br>') + '</div>'
+      + '<div class="pr-feedback">' + feedback.split('\n').join('<br>') + '</div>'
       + '</div>';
   }).join('');
 }
