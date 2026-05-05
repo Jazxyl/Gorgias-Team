@@ -7,15 +7,32 @@
 <title>Team Gorgias</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
+/* ── DARK MODE (default) ── */
 :root{
-  --bg:#0f1117;--bg2:#161b27;--bg3:#1e2435;--bg4:#252d40;
-  --border:#2a3347;--border2:#3a4560;
-  --text:#e8ecf4;--text2:#8b95b0;--text3:#4a5470;
-  --blue:#4f8ef7;--blue-dim:#1a2d52;--blue-light:#7aaeff;
+  --bg:#0b1e28;--bg2:#0f2535;--bg3:#162e3f;--bg4:#1c3750;
+  --border:#1e3d52;--border2:#2a5068;
+  --text:#e8f4f0;--text2:#7aacb8;--text3:#3a6070;
+  --accent:#5de86b;--accent-dim:#0d2e14;--accent-dark:#3db84a;
+  --navy:#093244;
+  --blue:#4f8ef7;--blue-dim:#0f2240;--blue-light:#7aaeff;
   --green:#3ecf8e;--green-dim:#0d2e20;
   --amber:#f5a623;--amber-dim:#2e1f0a;
   --red:#f05252;--red-dim:#2e0f0f;
   --purple:#a78bfa;--purple-dim:#1e1635;
+  --radius:8px;--radius-lg:12px;
+}
+/* ── LIGHT MODE ── */
+[data-theme="light"]{
+  --bg:#f0fbff;--bg2:#ffffff;--bg3:#e4f4f8;--bg4:#d0eaf2;
+  --border:#b8d8e4;--border2:#8fbfd0;
+  --text:#093244;--text2:#2a6070;--text3:#7aacb8;
+  --accent:#3db84a;--accent-dim:#d4f5d8;--accent-dark:#2a9438;
+  --navy:#093244;
+  --blue:#2563eb;--blue-dim:#dbeafe;--blue-light:#1d4ed8;
+  --green:#16a34a;--green-dim:#dcfce7;
+  --amber:#d97706;--amber-dim:#fef3c7;
+  --red:#dc2626;--red-dim:#fee2e2;
+  --purple:#7c3aed;--purple-dim:#ede9fe;
   --radius:8px;--radius-lg:12px;
 }
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
@@ -36,13 +53,13 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 /* ── APP SHELL ── */
 #app{display:none;min-height:100vh;flex-direction:column;}
-.topbar{background:var(--bg2);border-bottom:0.5px solid var(--border);padding:0 1.5rem;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.topbar{background:var(--navy);border-bottom:0.5px solid rgba(255,255,255,0.1);padding:0 1.5rem;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
 .topbar-left{display:flex;align-items:center;gap:16px;}
-.topbar-logo{font-size:15px;font-weight:600;color:var(--blue);letter-spacing:-0.3px;}
+.topbar-logo{font-size:15px;font-weight:600;color:var(--accent);letter-spacing:-0.3px;}
 .topbar-nav{display:flex;gap:2px;}
-.nav-btn{padding:6px 13px;border-radius:var(--radius);font-size:13px;color:var(--text2);cursor:pointer;border:none;background:transparent;transition:all 0.15s;white-space:nowrap;}
-.nav-btn:hover{background:var(--bg3);color:var(--text);}
-.nav-btn.active{background:var(--bg3);color:var(--blue);font-weight:500;}
+.nav-btn{padding:6px 13px;border-radius:var(--radius);font-size:13px;color:rgba(255,255,255,0.65);cursor:pointer;border:none;background:transparent;transition:all 0.15s;white-space:nowrap;}
+.nav-btn:hover{background:rgba(255,255,255,0.1);color:#fff;}
+.nav-btn.active{background:rgba(255,255,255,0.12);color:var(--accent);font-weight:500;}
 .topbar-right{display:flex;align-items:center;gap:10px;}
 .user-chip{display:flex;align-items:center;gap:8px;padding:5px 10px;background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--radius);font-size:13px;}
 .user-avatar{width:24px;height:24px;border-radius:50%;background:var(--blue-dim);color:var(--blue-light);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;}
@@ -258,7 +275,7 @@ input[type=text],input[type=password]{caret-color:var(--blue);}
         <span class="role-tag" id="user-role-tag">agent</span>
       </div>
       <button class="logout-btn" onclick="loadAllData()" style="margin-right:4px;" title="Refresh data">🔄</button>
-      <button class="logout-btn" onclick="doLogout()">Log out</button>
+      <button id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode" style="background:none;border:0.5px solid var(--border);border-radius:var(--radius);padding:5px 9px;cursor:pointer;color:var(--text2);font-size:15px;margin-right:4px;">🌙</button><button class="logout-btn" onclick="doLogout()">Log out</button>
     </div>
   </div>
 
@@ -574,6 +591,26 @@ function startSession(user) {
   loadAllData();
   showPage('home');
 }
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') !== 'light';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.getElementById('theme-toggle').textContent = isDark ? '🌙' : '☀️';
+  localStorage.setItem('tp-theme', isDark ? 'light' : 'dark');
+}
+
+// Apply saved theme on load
+(function() {
+  const saved = localStorage.getItem('tp-theme') || 'dark';
+  if (saved === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.addEventListener('DOMContentLoaded', function() {
+      const btn = document.getElementById('theme-toggle');
+      if (btn) btn.textContent = '☀️';
+    });
+  }
+})();
 
 function doLogout() {
   SESSION = null;
