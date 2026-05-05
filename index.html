@@ -437,13 +437,15 @@ function parseCSV(text) {
   }
 
   // Known header keywords to detect the real header row
-  const headerKeywords = ['username','name','title','date','type','status','hours','body','email','role','password'];
+  const headerKeywords = ['username','name','title','date','type','status','hours','body','email','role','password','url','description','category'];
   
-  // Find the header row index
+  // Find the header row index - require 3+ matches to avoid title rows
   let headerIdx = 0;
   for (let i = 0; i < Math.min(rawLines.length, 5); i++) {
     const lower = rawLines[i].toLowerCase();
-    const matches = headerKeywords.filter(k => lower.includes(k)).length;
+    // Count exact column-name matches (comma-separated)
+    const cols = lower.split(',').map(c => c.trim().replace(/^"|"$/g,''));
+    const matches = cols.filter(c => headerKeywords.includes(c)).length;
     if (matches >= 2) { headerIdx = i; break; }
   }
 
