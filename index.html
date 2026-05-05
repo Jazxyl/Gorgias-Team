@@ -1074,6 +1074,7 @@ function renderDashboard() {
   `;
 
   // Filter data
+  const isGodMode = SESSION && (SESSION.role||''). toLowerCase() === 'god';
   const isWeekly = DASH_FILTER.type === 'weekly';
   const filterKey = isWeekly ? DASH_FILTER.week : DASH_FILTER.month;
   const filterField = isWeekly ? 'week' : 'month';
