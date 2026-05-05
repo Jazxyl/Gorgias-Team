@@ -1201,6 +1201,7 @@ function renderDashboard() {
   `;
 
   // Inject bottom section
+  try {
   const bottomEl = document.getElementById('bottom-section');
   if (bottomEl) {
     if (!isWeekly) {
@@ -1220,21 +1221,14 @@ function renderDashboard() {
       </div>`;
     } else {
       const scorecardTitle = isGodMode ? 'Team Scorecard' : 'My Scorecard';
-      bottomEl.innerHTML = `
-      <div class="glide-section">
-        <div class="glide-grid">
-          <div class="glide-card">
-            <div class="glide-title">🏆 Team Rankings — Week ${DASH_FILTER.week}</div>
-            <div id="weekly-rankings"></div>
-          </div>
-          <div class="glide-card">
-            <div class="glide-title">📋 ${scorecardTitle}</div>
-            <div id="weekly-scorecard"></div>
-          </div>
-        </div>
-      </div>`;
+      const weeklyHTML = '<div class="glide-section"><div class="glide-grid">'
+        + '<div class="glide-card"><div class="glide-title">🏆 Team Rankings — Week ' + DASH_FILTER.week + '</div><div id="weekly-rankings"></div></div>'
+        + '<div class="glide-card"><div class="glide-title">📋 ' + scorecardTitle + '</div><div id="weekly-scorecard"></div></div>'
+        + '</div></div>';
+      bottomEl.innerHTML = weeklyHTML;
     }
   }
+  } catch(e) { console.error('Bottom section error:', e); }
 
   // Count-up animations
   requestAnimationFrame(() => {
