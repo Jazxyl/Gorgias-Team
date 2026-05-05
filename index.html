@@ -121,7 +121,8 @@ tr:hover td{background:var(--bg3);}
 .profile-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;}
 .profile-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;text-align:center;transition:border-color 0.15s;}
 .profile-card:hover{border-color:var(--border2);}
-.p-avatar{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;margin:0 auto 10px;}
+.p-avatar{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:600;margin:0 auto 12px;overflow:hidden;flex-shrink:0;}
+.p-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
 .p-name{font-size:14px;font-weight:500;}
 .p-role{font-size:12px;color:var(--text2);margin-top:2px;}
 .p-tags{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-top:8px;}
@@ -181,6 +182,20 @@ input[type=text],input[type=password]{caret-color:var(--blue);}
 /* ── DASHBOARD ── */
 @keyframes fadeSlideIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 @keyframes barGrow{from{width:0%;}to{width:var(--bar-width);}}
+/* ── PEER REVIEW ── */
+.pr-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:10px;}
+.pr-count{font-size:13px;color:var(--text2);}
+.pr-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:0.85rem;transition:border-color 0.15s;}
+.pr-card:hover{border-color:var(--border2);}
+.pr-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;gap:10px;}
+.pr-agent{font-size:13px;font-weight:600;color:var(--text);}
+.pr-ticket{font-size:12px;color:var(--accent);text-decoration:none;display:flex;align-items:center;gap:4px;white-space:nowrap;}
+.pr-ticket:hover{text-decoration:underline;}
+.pr-feedback{font-size:13px;color:var(--text2);line-height:1.6;}
+.pr-empty{color:var(--text2);font-size:13px;padding:2rem;text-align:center;}
+.pr-search{padding:7px 12px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;width:220px;}
+.pr-search:focus{outline:none;border-color:var(--accent);}
+
 /* ── GLIDE PATH ── */
 .glide-section{margin-top:1.25rem;}
 .glide-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1rem;}
@@ -264,6 +279,7 @@ input[type=text],input[type=password]{caret-color:var(--blue);}
         <button class="nav-btn" onclick="showPage('ot')">⏱️ OT Tracker</button>
         <button class="nav-btn" onclick="showPage('agents')">🪪 Agents</button>
         <button class="nav-btn" onclick="showPage('links')">🔗 Links</button>
+        <button class="nav-btn" onclick="showPage('peerreview')">💬 Peer Review</button>
         
         <button class="nav-btn god-only" onclick="showPage('godmode')" id="godmode-nav-btn">⚡ God Mode</button>
       </div>
@@ -286,6 +302,11 @@ input[type=text],input[type=password]{caret-color:var(--blue);}
       <div id="dashboard-container">
         <div class="loading"><div class="spinner"></div> Loading dashboard...</div>
       </div>
+    </div>
+
+    <!-- ── PEER REVIEW ── -->
+    <div class="page" id="page-peerreview" style="display:none">
+      <div id="peerreview-container"></div>
     </div>
 
     <!-- ── HOME ── -->
@@ -410,6 +431,13 @@ input[type=text],input[type=password]{caret-color:var(--blue);}
         <div class="setup-step">
           <div class="setup-num">7</div>
           <div class="setup-text">
+            <strong style="color:var(--text);">Peer Review Sheet</strong> — columns: <code>agent</code>, <code>feedback</code>, <code>ticket_url</code><br>
+            <input class="config-input" id="cfg-peerreview" placeholder="https://docs.google.com/spreadsheets/d/.../pub?gid=...&single=true&output=csv">
+          </div>
+        </div>
+        <div class="setup-step">
+          <div class="setup-num">8</div>
+          <div class="setup-text">
             <strong style="color:var(--text);">Productivity Sheet</strong> — columns: <code>Agent name</code>, <code>Avg per hour</code>, <code>Month</code>, <code>Week</code><br>
             <input class="config-input" id="cfg-productivity" placeholder="https://docs.google.com/spreadsheets/d/.../pub?gid=...&single=true&output=csv">
           </div>
@@ -452,6 +480,7 @@ const DEFAULTS = {
   leaves:        'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=106873471&single=true&output=csv',
   ot:            'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=600018604&single=true&output=csv',
   announcements: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=616452407&single=true&output=csv',
+  peerreview:    'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=1986699700&single=true&output=csv',
   productivity:  'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=2011249566&single=true&output=csv',
   quality:       'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=358178384&single=true&output=csv',
   links:         'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=953127428&single=true&output=csv'
@@ -471,7 +500,7 @@ let CFG = buildCFG();
 let SESSION = null;
 
 // cached sheet data
-let DATA = { users:[], agents:[], leaves:[], ot:[], announcements:[], links:[], productivity:[], quality:[] };
+let DATA = { users:[], agents:[], leaves:[], ot:[], announcements:[], links:[], productivity:[], quality:[], peerreview:[] };
 
 // ═══════════════════════════════════════════
 //  CSV PARSER
@@ -633,7 +662,7 @@ function showPage(p) {
   // Block god mode access for non-god users
   if (p === 'godmode' && (!SESSION || (SESSION.role||'').toLowerCase() !== 'god')) return;
   
-  ['dashboard','home','calendar','ot','agents','links','godmode'].forEach(function(name) {
+  ['dashboard','home','calendar','ot','agents','links','peerreview','godmode'].forEach(function(name) {
     var el = document.getElementById('page-'+name);
     if (el) el.style.display = 'none';
   });
@@ -648,6 +677,7 @@ function showPage(p) {
   if (p === 'ot') renderOT();
   if (p === 'links') renderLinks();
   if (p === 'dashboard') renderDashboard();
+  if (p === 'peerreview') renderPeerReview();
 }
 
 // ═══════════════════════════════════════════
@@ -660,6 +690,7 @@ async function loadAllData() {
   if (CFG.ot)            promises.push(fetchCSV(CFG.ot).then(d => DATA.ot = d));
   if (CFG.announcements) promises.push(fetchCSV(CFG.announcements).then(d => DATA.announcements = d));
   if (CFG.links)         promises.push(fetchCSV(CFG.links).then(d => DATA.links = d));
+  if (CFG.peerreview)    promises.push(fetchCSV(CFG.peerreview).then(d => DATA.peerreview = d));
   if (CFG.productivity)  promises.push(fetchCSV(CFG.productivity).then(d => DATA.productivity = d));
   if (CFG.quality)       promises.push(fetchCSV(CFG.quality).then(d => DATA.quality = d));
   if (CFG.users)         promises.push(fetchCSV(CFG.users).then(d => DATA.users = d));
@@ -874,8 +905,13 @@ function displayAgents(list) {
     const hubstaffId = a['hubstaff id'] || '';
     const birthdate = a['birthdate'] || '';
     const startDate = a['start_date'] || '';
+    const photo = a['photo'] || a['photo_url'] || a['image'] || '';
+    const avatarContent = photo
+      ? `<img src="${photo}" alt="${a.name||''}" onerror="this.parentElement.innerHTML='${initials}';this.parentElement.style.background='${bg}';this.parentElement.style.color='${fg}';">`
+      : initials;
+    const avatarStyle = photo ? '' : `background:${bg};color:${fg};`;
     return `<div class="profile-card">
-      <div class="p-avatar" style="background:${bg};color:${fg};">${initials}</div>
+      <div class="p-avatar" style="${avatarStyle}">${avatarContent}</div>
       <div class="p-name">${a.name||'—'}</div>
       <div class="p-role">${a.role||'—'}</div>
       <div class="p-tags">
@@ -903,13 +939,13 @@ function filterAgents() {
 // ═══════════════════════════════════════════
 function loadCfgInputs() {
   CFG = buildCFG();
-  ['users','agents','leaves','ot','announcements','links','productivity','quality'].forEach(k => {
+  ['users','agents','leaves','ot','announcements','links','peerreview','productivity','quality'].forEach(k => {
     const el = document.getElementById('cfg-'+k);
     if (el) el.value = CFG[k] || '';
   });
   const statusEl = document.getElementById('cfg-saved-status');
   if (statusEl) {
-    const keys = ['users','agents','leaves','ot','announcements','links','productivity','quality'];
+    const keys = ['users','agents','leaves','ot','announcements','links','peerreview','productivity','quality'];
     const saved = keys.filter(k => CFG[k]);
     const missing = keys.filter(k => !CFG[k]);
     statusEl.innerHTML = saved.length
@@ -919,7 +955,7 @@ function loadCfgInputs() {
 }
 
 function saveConfig() {
-  ['users','agents','leaves','ot','announcements','links','productivity','quality'].forEach(k => {
+  ['users','agents','leaves','ot','announcements','links','peerreview','productivity','quality'].forEach(k => {
     const el = document.getElementById('cfg-'+k);
     if (el) {
       const val = el.value.trim();
@@ -1309,6 +1345,122 @@ function renderDashboard() {
 
 
 
+
+// ── PEER REVIEW ──
+const PR_FILTER = { month: '', search: '' };
+
+function renderPeerReview() {
+  const container = document.getElementById('peerreview-container');
+  if (!container) return;
+
+  const isGod = SESSION && (SESSION.role||'').toLowerCase() === 'god';
+  const currentUser = SESSION ? (SESSION.display_name || SESSION.username || '') : '';
+  const firstName = currentUser.toLowerCase().split(' ')[0];
+
+  // Get valid reviews
+  let allReviews = DATA.peerreview.filter(function(r) {
+    return r['agent'] && r['agent'].trim() && r['feedback'] && r['feedback'].trim();
+  });
+
+  // Filter by agent if not god mode
+  if (!isGod) {
+    allReviews = allReviews.filter(function(r) {
+      const name = (r['agent'] || '').toLowerCase();
+      return name.indexOf(firstName) > -1 || firstName.indexOf(name.split(' ')[0]) > -1;
+    });
+  }
+
+  // Get unique months for dropdown
+  const months = [...new Set(allReviews.map(function(r){ return r['month'] || ''; }).filter(Boolean))].sort(function(a,b){ return +a - +b; });
+  const monthNames = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  // Default to latest month
+  if (!PR_FILTER.month && months.length) PR_FILTER.month = months[months.length - 1];
+
+  const monthOptions = '<option value="">All Months</option>' + months.map(function(m) {
+    return '<option value="' + m + '"' + (PR_FILTER.month === m ? ' selected' : '') + '>' + (monthNames[+m] || 'Month ' + m) + '</option>';
+  }).join('');
+
+  const title = isGod ? '💬 Peer Reviews — All Agents' : '💬 My Peer Reviews';
+
+  container.innerHTML = '<div class="pr-header">'
+    + '<div style="font-size:15px;font-weight:500;">' + title + '</div>'
+    + '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
+    + '<select class="dash-select" id="pr-month" onchange="PR_FILTER.month=this.value;applyPRFilters()">' + monthOptions + '</select>'
+    + (isGod ? '<input class="pr-search" id="pr-search" placeholder="🔍 Search agent..." oninput="PR_FILTER.search=this.value;applyPRFilters()" value="' + PR_FILTER.search + '" />' : '')
+    + '<span class="pr-count" id="pr-count"></span>'
+    + '</div></div>'
+    + '<div id="pr-list"></div>';
+
+  applyPRFilters();
+}
+
+function applyPRFilters() {
+  const isGod = SESSION && (SESSION.role||'').toLowerCase() === 'god';
+  const currentUser = SESSION ? (SESSION.display_name || SESSION.username || '') : '';
+  const firstName = currentUser.toLowerCase().split(' ')[0];
+
+  let reviews = DATA.peerreview.filter(function(r) {
+    return r['agent'] && r['agent'].trim() && r['feedback'] && r['feedback'].trim();
+  });
+
+  // Agent filter
+  if (!isGod) {
+    reviews = reviews.filter(function(r) {
+      const name = (r['agent'] || '').toLowerCase();
+      return name.indexOf(firstName) > -1 || firstName.indexOf(name.split(' ')[0]) > -1;
+    });
+  }
+
+  // Month filter
+  if (PR_FILTER.month) {
+    reviews = reviews.filter(function(r) { return (r['month']||'') === PR_FILTER.month; });
+  }
+
+  // Search filter
+  if (PR_FILTER.search) {
+    const q = PR_FILTER.search.toLowerCase();
+    reviews = reviews.filter(function(r) {
+      return (r['agent']||'').toLowerCase().indexOf(q) > -1
+          || (r['feedback']||'').toLowerCase().indexOf(q) > -1;
+    });
+  }
+
+  const countEl = document.getElementById('pr-count');
+  if (countEl) countEl.textContent = reviews.length + ' review' + (reviews.length !== 1 ? 's' : '');
+  renderPRList(reviews);
+}
+
+function renderPRList(reviews) {
+  const list = document.getElementById('pr-list');
+  if (!list) return;
+
+  if (!reviews.length) {
+    list.innerHTML = '<div class="pr-empty">No peer reviews found.' + (DATA.peerreview.length === 0 ? ' Connect your sheet in God Mode.' : '') + '</div>';
+    return;
+  }
+
+  list.innerHTML = reviews.map(function(r) {
+    const agent = r['agent'] || '—';
+    const feedback = r['feedback'] || '';
+    const url = r['ticket_url'] || r['ticket url'] || r['url'] || '';
+    const month = r['month'] || '';
+    const monthNames = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const monthLabel = month ? '<span style="font-size:11px;color:var(--text3);margin-left:8px;">' + (monthNames[+month] || month) + '</span>' : '';
+    const ticketLink = url
+      ? '<a class="pr-ticket" href="' + url + '" target="_blank">🔗 View Ticket</a>'
+      : '';
+    return '<div class="pr-card dash-animate">'
+      + '<div class="pr-card-header">'
+      + '<span class="pr-agent">👤 ' + agent + monthLabel + '</span>'
+      + ticketLink
+      + '</div>'
+      + '<div class="pr-feedback">' + feedback.replace(/
+/g, '<br>') + '</div>'
+      + '</div>';
+  }).join('');
+}
+
 // ── WEEKLY EXTRAS ──
 function renderWeeklyExtras(week) {
   const isGod = SESSION && (SESSION.role||'').toLowerCase() === 'god';
@@ -1608,7 +1760,7 @@ async function debugCSV() {
   out.style.display = 'block';
   out.textContent = 'Fetching...';
   
-  const keys = ['users','agents','leaves','ot','announcements','links','productivity','quality'];
+  const keys = ['users','agents','leaves','ot','announcements','links','peerreview','productivity','quality'];
   let result = '';
   
   for (const k of keys) {
