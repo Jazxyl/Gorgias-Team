@@ -705,7 +705,7 @@ function renderHome() {
   if (!ann.length) {
     container.innerHTML = '<div class="ann-item ann-info"><div class="ann-title">Welcome to TeamHub</div><div class="ann-body">No announcements yet. Connect your Google Sheet in God Mode to load announcements.</div><div class="ann-meta">IT Operations Portal</div></div>';
   } else {
-    const sorted = [...ann].filter(a => a.title && a.title.trim() && (!a.active || a.active.toString().toUpperCase() !== 'FALSE')).reverse();
+    const sorted = [...ann].filter(a => a.title && a.title.trim() && a.title.trim().length < 100 && (!a.active || a.active.toString().toUpperCase() !== 'FALSE')).reverse();
     container.innerHTML = '<div class="section-title" style="margin-bottom:0.75rem;">📢 Announcements</div>' +
       sorted.filter(a => a.title && a.title.trim()).map(a => `<div class="ann-item ann-${a.type||'info'}"><div class="ann-title">${a.title.trim()}</div><div class="ann-body">${a.body||''}</div><div class="ann-meta">${a.author||''} · ${normalizeDate(a.date)||''}</div></div>`).join('');
   }
@@ -789,37 +789,54 @@ function renderCalendar() {
 //  OT TRACKER
 // ═══════════════════════════════════════════
 function renderOT() {
-  const filter = document.getElementById('ot-month-filter').value; // YYYY-MM
-  const rows = DATA.ot.filter(r => {
+  const isGod = SESSION && (SESSION.role||'').toLowerCase() === 'god';
+  const currentUser = SESSION ? (SESSION.display_name || SESSION.username || '') : '';
+  const firstName = currentUser.toLowerCase().split(' ')[0];
+
+  const filter = document.getElementById('ot-month-filter').value;
+  let rows = DATA.ot.filter(r => {
     if (!r.date) return false;
     const nd = normalizeDate(r.date);
     if (!filter) return true;
     return nd.startsWith(filter);
   });
 
+  // Filter by agent if not god mode
+  if (!isGod) {
+    rows = rows.filter(r => {
+      const name = (r.name || '').toLowerCase();
+      return name.indexOf(firstName) > -1 || firstName.indexOf(name.split(' ')[0]) > -1;
+    });
+  }
+
   document.getElementById('ot-loading').style.display = 'none';
   document.getElementById('ot-table-wrap').style.display = '';
 
   const tbody = document.getElementById('ot-body');
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text2);text-align:center;padding:1.5rem;">No OT records found. Connect your Google Sheet in God Mode.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text2);text-align:center;padding:1.5rem;">' + (isGod ? 'No OT records found.' : 'No OT records found for you this period.') + '</td></tr>';
   } else {
-    tbody.innerHTML = rows.map(r => `
-      <tr>
-        <td>${r.name||'—'}</td>
-        <td>${normalizeDate(r.date)||'—'}</td>
-        <td><strong>${parseFloat(r.hours||0).toFixed(1)}h</strong></td>
-        <td style="color:var(--text2);">${r.reason||r.status||'—'}</td>
-        <td>${statusBadge(r.status)}</td>
-      </tr>`).join('');
+    tbody.innerHTML = rows.map(function(r) {
+      return '<tr>'
+        + (isGod ? '<td>' + (r.name||'—') + '</td>' : '')
+        + '<td>' + (normalizeDate(r.date)||'—') + '</td>'
+        + '<td><strong>' + parseFloat(r.hours||0).toFixed(1) + 'h</strong></td>'
+        + '<td style="color:var(--text2);">' + (r.reason||r.status||'—') + '</td>'
+        + '<td>' + statusBadge(r.status) + '</td>'
+        + '</tr>';
+    }).join('');
   }
+
+  // Update table header to hide Name col for agents
+  const nameHeader = document.getElementById('ot-name-header');
+  if (nameHeader) nameHeader.style.display = isGod ? '' : 'none';
 
   // Metrics
   const total = rows.reduce((s,r) => s+parseFloat(r.hours||0),0);
-  const agents = new Set(rows.map(r=>r.name)).size;
+  const agentCount = new Set(rows.map(r=>r.name)).size;
   document.getElementById('ot-total').textContent = total.toFixed(1)+' hrs';
-  document.getElementById('ot-agents').textContent = agents;
-  document.getElementById('ot-avg').textContent = agents ? (total/agents).toFixed(1)+' hrs' : '—';
+  document.getElementById('ot-agents').textContent = isGod ? agentCount : '—';
+  document.getElementById('ot-avg').textContent = agentCount ? (total/agentCount).toFixed(1)+' hrs' : '—';
   document.getElementById('ot-metrics').style.display = 'grid';
 }
 
