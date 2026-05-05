@@ -1244,7 +1244,12 @@ function renderDashboard() {
   if (!isWeekly) {
     setTimeout(() => renderGlidePath(filterKey), 50);
   } else {
-    setTimeout(() => renderWeeklyExtras(filterKey), 50);
+    function tryRenderWeekly(attempts) {
+      const el = document.getElementById('weekly-rankings');
+      if (el) { renderWeeklyExtras(filterKey); }
+      else if (attempts > 0) { setTimeout(() => tryRenderWeekly(attempts-1), 50); }
+    }
+    setTimeout(() => tryRenderWeekly(10), 50);
   }
 }
 
@@ -1297,7 +1302,7 @@ function renderWeeklyExtras(week) {
         ${ranked.map((a, i) => {
           const tphC = a.tph ? (a.tph >= 2.0 ? '#3ecf8e' : a.tph >= 1.7 ? '#f5a623' : '#f05252') : 'var(--text3)';
           const qaC = a.qa ? (a.qa >= 90 ? '#3ecf8e' : a.qa >= 85 ? '#f5a623' : '#f05252') : 'var(--text3)';
-          const rank = medals[i] || `${i+1}`;
+          const rank = medals[i] || (i+1).toString();
           const isMe = !isGod && (a.name.toLowerCase().includes(currentUser.toLowerCase().split(' ')[0]) || currentUser.toLowerCase().includes(a.name.toLowerCase().split(' ')[0]));
           return `<tr class="dash-animate" style="animation-delay:${delay}s;${isMe ? 'background:var(--blue-dim);' : ''}">
             <td style="font-size:15px">${rank}</td>
@@ -1328,9 +1333,10 @@ function renderWeeklyExtras(week) {
       const tphStatus = a.tph ? (a.tph >= 2.0 ? '✓ On target' : '✗ Below target') : 'No data';
       const qaStatus = a.qa ? (a.qa >= 90 ? '✓ On target' : '✗ Below target') : 'No evaluations';
 
-      return `
-        ${isGod ? `<div class="glide-agent-header">${a.name}</div>` : ''}
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:${isGod?'12':'0'}px;">
+      const agentHeader = isGod ? '<div class="glide-agent-header">' + a.name + '</div>' : '';
+      const mbVal = isGod ? '12' : '0';
+      return agentHeader + `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:${mbVal}px;">
           <div style="background:var(--bg3);border-radius:var(--radius);padding:10px 12px;">
             <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">TPH</div>
             <div style="font-size:22px;font-weight:500;color:${tphColor}">${a.tph ? a.tph.toFixed(2) : '—'}</div>
