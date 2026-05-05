@@ -274,23 +274,11 @@ input[type=text],input[type=password]{caret-color:var(--blue);}
     </div>
 
     <!-- ── INTERNAL LINKS ── -->
-    <div class="page" id="page-links" style="display:none">
-      <div class="link-grid">
-        <div class="link-card">
-          <div class="section-title">Gorgias</div>
-          <div class="link-item" onclick="openLink('https://jira.atlassian.com')"><div class="link-icon" style="background:#1a2d52;color:#7aaeff;">◆</div><div><div class="link-name">Jira</div><div class="link-desc">Sprint tracking & issue management</div></div></div>
-          <div class="link-item" onclick="openLink('https://confluence.atlassian.com')"><div class="link-icon" style="background:#1e2635;color:#4f8ef7;">○</div><div><div class="link-name">Confluence</div><div class="link-desc">Team wiki & knowledge base</div></div></div>
-          <div class="link-item" onclick="openLink('https://bitbucket.org')"><div class="link-icon" style="background:#2e1f0a;color:#f5a623;">▲</div><div><div class="link-name">Bitbucket</div><div class="link-desc">Code repositories</div></div></div>
-        </div>
-        <div class="link-card">
-          <div class="section-title">Talentpop</div>
-          <div class="link-item" onclick="openLink('#')"><div class="link-icon" style="background:#2e0f0f;color:#f05252;">■</div><div><div class="link-name">ServiceDesk</div><div class="link-desc">IT support ticket system</div></div></div>
-          <div class="link-item" onclick="openLink('#')"><div class="link-icon" style="background:#1e1635;color:#a78bfa;">◆</div><div><div class="link-name">Monitoring</div><div class="link-desc">System health dashboards</div></div></div>
-          <div class="link-item" onclick="openLink('#')"><div class="link-icon" style="background:#0d2e20;color:#3ecf8e;">▲</div><div><div class="link-name">VPN Portal</div><div class="link-desc">Remote access & credentials</div></div></div>
-        </div>
-
-
+  <div class="page" id="page-links" style="display:none">
+      <div id="links-container">
+        <div class="loading"><div class="spinner"></div> Loading links...</div>
       </div>
+    </div>
     </div>
 
     <!-- ── BCP ── -->
@@ -372,6 +360,13 @@ input[type=text],input[type=password]{caret-color:var(--blue);}
             <input class="config-input" id="cfg-announcements" placeholder="https://docs.google.com/spreadsheets/d/.../pub?gid=...&single=true&output=csv">
           </div>
         </div>
+        <div class="setup-step">
+          <div class="setup-num">6</div>
+          <div class="setup-text">
+            <strong style="color:var(--text);">Links Sheet</strong> — columns: <code>name</code>, <code>url</code>, <code>description</code>, <code>category</code> (Gorgias or Talentpop)<br>
+            <input class="config-input" id="cfg-links" placeholder="https://docs.google.com/spreadsheets/d/.../pub?gid=...&single=true&output=csv">
+          </div>
+        </div>
         <button class="config-btn" onclick="saveConfig()">Save & Connect Sheets</button>
         <span id="cfg-status" style="font-size:12px;color:var(--green);margin-left:12px;"></span>
         <button class="config-btn" style="background:var(--amber);margin-left:8px;" onclick="debugCSV()">🔍 Debug CSV</button>
@@ -402,7 +397,8 @@ const DEFAULTS = {
   agents:        'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=450581324&single=true&output=csv',
   leaves:        'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=106873471&single=true&output=csv',
   ot:            'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=600018604&single=true&output=csv',
-  announcements: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=616452407&single=true&output=csv'
+  announcements: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=616452407&single=true&output=csv',
+  links:         ''
 };
 
 // CFG always starts from DEFAULTS. localStorage only overrides if god sets custom URLs.
@@ -419,7 +415,7 @@ let CFG = buildCFG();
 let SESSION = null;
 
 // cached sheet data
-let DATA = { users:[], agents:[], leaves:[], ot:[], announcements:[] };
+let DATA = { users:[], agents:[], leaves:[], ot:[], announcements:[], links:[] };
 
 // ═══════════════════════════════════════════
 //  CSV PARSER
@@ -584,6 +580,7 @@ async function loadAllData() {
   if (CFG.leaves)        promises.push(fetchCSV(CFG.leaves).then(d => DATA.leaves = d));
   if (CFG.ot)            promises.push(fetchCSV(CFG.ot).then(d => DATA.ot = d));
   if (CFG.announcements) promises.push(fetchCSV(CFG.announcements).then(d => DATA.announcements = d));
+  if (CFG.links)         promises.push(fetchCSV(CFG.links).then(d => DATA.links = d));
   if (CFG.users)         promises.push(fetchCSV(CFG.users).then(d => DATA.users = d));
 
   await Promise.all(promises);
@@ -591,6 +588,7 @@ async function loadAllData() {
   renderAgents();
   renderOT();
   renderCalendar();
+  renderLinks();
 }
 
 // ═══════════════════════════════════════════
@@ -805,7 +803,7 @@ function filterAgents() {
 // ═══════════════════════════════════════════
 function loadCfgInputs() {
   CFG = buildCFG();
-  ['users','agents','leaves','ot','announcements'].forEach(k => {
+  ['users','agents','leaves','ot','announcements','links'].forEach(k => {
     const el = document.getElementById('cfg-'+k);
     if (el) el.value = CFG[k] || '';
   });
@@ -821,7 +819,7 @@ function loadCfgInputs() {
 }
 
 function saveConfig() {
-  ['users','agents','leaves','ot','announcements'].forEach(k => {
+  ['users','agents','leaves','ot','announcements','links'].forEach(k => {
     const el = document.getElementById('cfg-'+k);
     if (el) {
       const val = el.value.trim();
@@ -870,6 +868,79 @@ function renderRoleManager() {
         <span class="badge ${u.role==='god'?'b-amber':u.role==='lead'?'b-purple':'b-blue'}">${u.role||'agent'}</span>
       </div>`).join('')}
     <button class="config-btn" style="margin-top:1rem;" onclick="loadAllData().then(renderRoleManager)">↻ Refresh from Sheet</button>`;
+}
+
+// ── ICON DETECTION ──
+function getLinkIcon(name, url) {
+  const n = (name||'').toLowerCase();
+  const u = (url||'').toLowerCase();
+  const checks = [
+    [['gorgias'],                       '💬', '#1a2d52', '#7aaeff'],
+    [['slack'],                         '💬', '#1a2d52', '#7aaeff'],
+    [['zoom'],                          '📹', '#1e1635', '#a78bfa'],
+    [['meet', 'google meet'],           '📹', '#0d2e20', '#3ecf8e'],
+    [['drive', 'docs', 'sheets','gdoc'],'📄', '#0d2e20', '#3ecf8e'],
+    [['gmail', 'mail', 'email','owa'],  '📧', '#2e1f0a', '#f5a623'],
+    [['jira'],                          '🎯', '#1a2d52', '#7aaeff'],
+    [['confluence'],                    '📚', '#1e2635', '#4f8ef7'],
+    [['notion'],                        '📝', '#2e2e2e', '#e8ecf4'],
+    [['trello'],                        '📋', '#1a2d52', '#7aaeff'],
+    [['github','bitbucket','gitlab'],   '💻', '#2e1f0a', '#f5a623'],
+    [['figma'],                         '🎨', '#2e0f1a', '#f05252'],
+    [['hubstaff'],                      '⏱', '#1e1635', '#a78bfa'],
+    [['talentpop'],                     '🏢', '#0d2e20', '#3ecf8e'],
+    [['payroll','hris','hr'],           '💰', '#2e1a2e', '#d8b4fe'],
+    [['training','lms','learn'],        '🎓', '#1a2d52', '#7aaeff'],
+    [['report','analytics','stats'],    '📊', '#2e1f0a', '#f5a623'],
+    [['vpn','remote','access'],         '🔒', '#2e0f0f', '#f05252'],
+    [['calendar','schedule'],           '📅', '#0d2e20', '#3ecf8e'],
+    [['chat','teams','discord'],        '💬', '#1e1635', '#a78bfa'],
+  ];
+  for (const [keywords, emoji, bg, fg] of checks) {
+    if (keywords.some(k => n.includes(k) || u.includes(k))) {
+      return { emoji, bg, fg };
+    }
+  }
+  return { emoji: '🔗', bg: '#1a2d52', fg: '#7aaeff' };
+}
+
+// ── RENDER LINKS ──
+function renderLinks() {
+  const container = document.getElementById('links-container');
+  if (!container) return;
+
+  if (!DATA.links.length) {
+    container.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:1rem;">No links loaded. Add a Links sheet in God Mode.</div>';
+    return;
+  }
+
+  // Group by category
+  const groups = {};
+  DATA.links.forEach(l => {
+    if (!l.name || !l.url) return;
+    const cat = l.category || 'General';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(l);
+  });
+
+  const html = '<div class="link-grid">' +
+    Object.entries(groups).map(([cat, items]) => `
+      <div class="link-card">
+        <div class="section-title">${cat}</div>
+        ${items.map(l => {
+          const {emoji, bg, fg} = getLinkIcon(l.name, l.url);
+          return `<div class="link-item" onclick="openLink('${l.url}')">
+            <div class="link-icon" style="background:${bg};color:${fg};">${emoji}</div>
+            <div>
+              <div class="link-name">${l.name}</div>
+              ${l.description ? `<div class="link-desc">${l.description}</div>` : ''}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`
+    ).join('') + '</div>';
+
+  container.innerHTML = html;
 }
 
 function openLink(url) { if(url && url !== '#') window.open(url,'_blank'); }
