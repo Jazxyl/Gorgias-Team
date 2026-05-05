@@ -1156,22 +1156,22 @@ function renderDashboard() {
     <!-- Summary cards -->
     <div class="dash-summary">
       <div class="dash-summary-card dash-animate dash-animate-1">
-        <div class="dash-summary-label">Avg TPH</div>
+        <div class="dash-summary-label">Team Avg TPH</div>
         <div class="dash-summary-val" id="anim-avg-tph" style="color:${parseFloat(avgTPH)>=2?'#3ecf8e':parseFloat(avgTPH)>=1.7?'#f5a623':'#f05252'}">0</div>
         <div class="dash-summary-sub">Target: 2.0</div>
       </div>
       <div class="dash-summary-card dash-animate dash-animate-2">
-        <div class="dash-summary-label">At/Above TPH Target</div>
+        <div class="dash-summary-label">Team TPH Target</div>
         <div class="dash-summary-val"><span id="anim-above-tph">0</span><span style="font-size:14px;color:var(--text2)"> / ${prodVals.length}</span></div>
         <div class="dash-summary-sub">agents meeting 2.0+</div>
       </div>
       <div class="dash-summary-card dash-animate dash-animate-3">
-        <div class="dash-summary-label">Avg QA Score</div>
+        <div class="dash-summary-label">Team Avg QA Score</div>
         <div class="dash-summary-val" id="anim-avg-qa" style="color:${parseFloat(avgQA)>=90?'#3ecf8e':parseFloat(avgQA)>=85?'#f5a623':'#f05252'}">0%</div>
         <div class="dash-summary-sub">Target: 90%</div>
       </div>
       <div class="dash-summary-card dash-animate dash-animate-4">
-        <div class="dash-summary-label">At/Above QA Target</div>
+        <div class="dash-summary-label">Team QA Target</div>
         <div class="dash-summary-val"><span id="anim-above-qa">0</span><span style="font-size:14px;color:var(--text2)"> / ${qaVals.length}</span></div>
         <div class="dash-summary-sub">agents meeting 90%+</div>
       </div>
