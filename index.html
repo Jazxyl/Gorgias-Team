@@ -910,8 +910,21 @@ function renderLinks() {
   const container = document.getElementById('links-container');
   if (!container) { setTimeout(renderLinks, 100); return; }
 
+  // DEBUG: always show status
+  const debugInfo = `CFG.links: ${CFG.links ? 'SET' : 'NOT SET'} | DATA.links: ${DATA.links.length} rows`;
+  
   if (!DATA.links.length) {
-    container.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:1rem;">No links loaded. Add a Links sheet in God Mode.</div>';
+    container.innerHTML = `<div style="color:var(--text2);font-size:13px;padding:1rem;">No links loaded.<br><small style="color:var(--text3);">${debugInfo}</small></div>`;
+    // Try fetching directly if URL exists
+    if (CFG.links) {
+      fetchCSV(CFG.links).then(rows => {
+        DATA.links = rows;
+        if (rows.length) renderLinks();
+        else container.innerHTML = `<div style="color:var(--red);font-size:13px;padding:1rem;">Fetch returned 0 rows.<br><small>${debugInfo}</small></div>`;
+      }).catch(e => {
+        container.innerHTML = `<div style="color:var(--red);font-size:13px;padding:1rem;">Fetch error: ${e.message}</div>`;
+      });
+    }
     return;
   }
 
