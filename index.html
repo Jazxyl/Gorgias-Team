@@ -810,7 +810,7 @@ function loadCfgInputs() {
   });
   const statusEl = document.getElementById('cfg-saved-status');
   if (statusEl) {
-    const keys = ['users','agents','leaves','ot','announcements'];
+    const keys = ['users','agents','leaves','ot','announcements','links'];
     const saved = keys.filter(k => CFG[k]);
     const missing = keys.filter(k => !CFG[k]);
     statusEl.innerHTML = saved.length
@@ -964,7 +964,7 @@ async function debugCSV() {
   out.style.display = 'block';
   out.textContent = 'Fetching...';
   
-  const keys = ['users','agents','leaves','ot','announcements'];
+  const keys = ['users','agents','leaves','ot','announcements','links'];
   let result = '';
   
   for (const k of keys) {
