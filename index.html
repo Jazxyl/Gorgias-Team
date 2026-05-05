@@ -164,6 +164,17 @@ input[type=text],input[type=password]{caret-color:var(--blue);}
 /* ── DASHBOARD ── */
 @keyframes fadeSlideIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 @keyframes barGrow{from{width:0%;}to{width:var(--bar-width);}}
+/* ── GLIDE PATH ── */
+.glide-section{margin-top:1.25rem;}
+.glide-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1rem;}
+.glide-title{font-size:13px;font-weight:500;margin-bottom:1rem;}
+.glide-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;}
+.glide-chart-wrap{position:relative;height:220px;}
+.trend-up{color:#3ecf8e;font-weight:600;}
+.trend-down{color:#f05252;font-weight:600;}
+.trend-flat{color:var(--text3);}
+.glide-agent-header{font-size:12px;font-weight:500;color:var(--text2);margin:0.75rem 0 0.4rem;padding-bottom:4px;border-bottom:0.5px solid var(--border);}
+
 .dash-animate{animation:fadeSlideIn 0.35s ease forwards;opacity:0;}
 .dash-animate-1{animation-delay:0.05s;}
 .dash-animate-2{animation-delay:0.10s;}
@@ -203,6 +214,7 @@ input[type=text],input[type=password]{caret-color:var(--blue);}
 .dash-summary-val{font-size:20px;font-weight:500;}
 .dash-summary-sub{font-size:11px;color:var(--text2);margin-top:2px;}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -1182,6 +1194,22 @@ function renderDashboard() {
     </div>
 
     ${(!prodVals.length && !qaVals.length) ? '<div style="color:var(--text2);font-size:13px;padding:1rem;">No data for this period. Connect your sheets in God Mode.</div>' : ''}
+
+  <!-- Glide Path section (monthly view only) -->
+  ${!isWeekly ? `
+  <div class="glide-section">
+    <div class="dash-card-title" style="margin-bottom:1rem;">📈 Glide Path — Week by Week (Month ${DASH_FILTER.month})</div>
+    <div class="glide-grid">
+      <div class="glide-card">
+        <div class="glide-title">⚡ TPH Trend</div>
+        <div class="glide-chart-wrap"><canvas id="tph-chart"></canvas></div>
+      </div>
+      <div class="glide-card">
+        <div class="glide-title">🎯 QA Score Trend</div>
+        <div id="qa-trend-table"></div>
+      </div>
+    </div>
+  </div>` : ''}
   `;
 
   // Count-up animations
@@ -1191,6 +1219,172 @@ function renderDashboard() {
     countUp('anim-avg-qa', 0, parseFloat(avgQA)||0, 600, 1, '%');
     countUp('anim-above-qa', 0, aboveQA, 400, 0);
   });
+
+  // Render glide path for monthly view
+  if (!isWeekly) {
+    setTimeout(() => renderGlidePath(filterKey), 50);
+  }
+}
+
+
+// ── GLIDE PATH ──
+let tphChartInstance = null;
+
+function renderGlidePath(month) {
+  const isGod = SESSION && (SESSION.role||'').toLowerCase() === 'god';
+  const currentUser = SESSION ? (SESSION.display_name || SESSION.username) : '';
+
+  // Get all weeks in this month from productivity data
+  const monthProd = DATA.productivity.filter(r =>
+    r['month'] === month && r['agent name'] && r['agent name'].trim() &&
+    r['avg per hour'] && r['avg per hour'].trim() !== '-' && !isNaN(parseFloat(r['avg per hour']))
+  );
+  const monthQA = DATA.quality.filter(r =>
+    r['month'] === month && r['agent'] && r['agent'].trim() && r['qa_score'] && !isNaN(parseFloat(r['qa_score']))
+  );
+
+  if (!monthProd.length && !monthQA.length) return;
+
+  // Get sorted weeks
+  const weeks = [...new Set(monthProd.map(r => r['week']))].sort((a,b) => +a - +b);
+  const weekLabels = weeks.map(w => 'Wk ' + w);
+
+  // Get agents to show
+  let agents;
+  if (isGod) {
+    agents = [...new Set(monthProd.map(r => r['agent name']))].sort();
+  } else {
+    // Match logged-in user to agent name
+    agents = [...new Set(monthProd.map(r => r['agent name']))].filter(name =>
+      name.toLowerCase().includes(currentUser.toLowerCase().split(' ')[0]) ||
+      currentUser.toLowerCase().includes(name.toLowerCase().split(' ')[0])
+    );
+    if (!agents.length) agents = [...new Set(monthProd.map(r => r['agent name']))].slice(0,1);
+  }
+
+  // Color palette for agents
+  const palette = ['#4f8ef7','#3ecf8e','#f5a623','#a78bfa','#f05252','#3ecf8e','#f07a23','#7aaeff','#d8b4fe'];
+
+  // Build TPH datasets
+  const tphDatasets = agents.map((agent, i) => {
+    const data = weeks.map(w => {
+      const rows = monthProd.filter(r => r['agent name'] === agent && r['week'] === w);
+      if (!rows.length) return null;
+      const vals = rows.map(r => parseFloat(r['avg per hour'])).filter(v => !isNaN(v) && v > 0);
+      return vals.length ? +(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2) : null;
+    });
+    return {
+      label: agent.split(' ')[0],
+      data,
+      borderColor: palette[i % palette.length],
+      backgroundColor: palette[i % palette.length] + '22',
+      tension: 0.4,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      borderWidth: 2,
+      spanGaps: true,
+    };
+  });
+
+  // Render TPH chart
+  const canvas = document.getElementById('tph-chart');
+  if (canvas) {
+    if (tphChartInstance) { tphChartInstance.destroy(); tphChartInstance = null; }
+    tphChartInstance = new Chart(canvas, {
+      type: 'line',
+      data: { labels: weekLabels, datasets: tphDatasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: { color: '#8b95b0', font: { size: 11 }, boxWidth: 12 }
+          },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        scales: {
+          x: { ticks: { color: '#8b95b0', font: { size: 11 } }, grid: { color: '#2a3347' } },
+          y: {
+            ticks: { color: '#8b95b0', font: { size: 11 } },
+            grid: { color: '#2a3347' },
+            suggestedMin: 1.0,
+            suggestedMax: 3.5,
+          }
+        },
+        animation: { duration: 700, easing: 'easeInOutQuart' }
+      }
+    });
+
+    // Draw target line annotation manually
+    const targetPlugin = {
+      id: 'targetLine',
+      afterDraw(chart) {
+        const { ctx, scales: { y, x } } = chart;
+        const yPos = y.getPixelForValue(2.0);
+        ctx.save();
+        ctx.beginPath();
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = '#f5a623';
+        ctx.lineWidth = 1;
+        ctx.moveTo(x.left, yPos);
+        ctx.lineTo(x.right, yPos);
+        ctx.stroke();
+        ctx.fillStyle = '#f5a623';
+        ctx.font = '10px sans-serif';
+        ctx.fillText('Target 2.0', x.right - 52, yPos - 4);
+        ctx.restore();
+      }
+    };
+    tphChartInstance.config.plugins = [targetPlugin];
+    tphChartInstance.update();
+  }
+
+  // Render QA trend table
+  const qaTable = document.getElementById('qa-trend-table');
+  if (!qaTable) return;
+
+  let tableHtml = '';
+  agents.forEach(agent => {
+    const agentQA = monthQA.filter(r => r['agent'] === agent);
+    if (!agentQA.length) return;
+
+    const qaByWeek = {};
+    weeks.forEach(w => {
+      const rows = agentQA.filter(r => r['week'] === w);
+      if (!rows.length) return;
+      const vals = rows.map(r => parseFloat(r['qa_score'])).filter(v => !isNaN(v));
+      if (vals.length) qaByWeek[w] = +(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);
+    });
+
+    const weekEntries = weeks.map(w => ({ week: w, score: qaByWeek[w] })).filter(e => e.score !== undefined);
+    if (!weekEntries.length) return;
+
+    if (isGod) tableHtml += `<div class="glide-agent-header">${agent.split(' ')[0]}</div>`;
+
+    tableHtml += '<table class="dash-table" style="margin-bottom:8px"><thead><tr>';
+    tableHtml += weekEntries.map(e => `<th>Wk ${e.week}</th>`).join('');
+    tableHtml += '<th>Trend</th></tr></thead><tbody><tr>';
+    tableHtml += weekEntries.map((e, i) => {
+      const {fg, bg} = e.score >= 95 ? {fg:'#3ecf8e',bg:'#0d2e20'} :
+                       e.score >= 90 ? {fg:'#8ecf3e',bg:'#1a2e0a'} :
+                       e.score >= 85 ? {fg:'#f5a623',bg:'#2e1f0a'} :
+                       e.score >= 75 ? {fg:'#f07a23',bg:'#2e1500'} :
+                                       {fg:'#f05252',bg:'#2e0f0f'};
+      return `<td><span class="dash-score" style="color:${fg};background:${bg}">${e.score}%</span></td>`;
+    }).join('');
+
+    // Trend arrow
+    const first = weekEntries[0].score;
+    const last = weekEntries[weekEntries.length - 1].score;
+    const diff = last - first;
+    const trendClass = diff > 1 ? 'trend-up' : diff < -1 ? 'trend-down' : 'trend-flat';
+    const trendIcon = diff > 1 ? '↑' : diff < -1 ? '↓' : '→';
+    const trendText = diff > 1 ? `+${diff.toFixed(1)}%` : diff < -1 ? `${diff.toFixed(1)}%` : 'Stable';
+    tableHtml += `<td><span class="${trendClass}">${trendIcon} ${trendText}</span></td>`;
+    tableHtml += '</tr></tbody></table>';
+  });
+
+  qaTable.innerHTML = tableHtml || '<div style="color:var(--text2);font-size:13px;">No QA data for this month.</div>';
 }
 
 function countUp(id, from, to, duration, decimals, suffix) {
