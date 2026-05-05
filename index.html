@@ -93,12 +93,12 @@ tr:hover td{background:var(--bg3);}
 .cal-cell.other{opacity:0.4;}
 .cal-num{font-size:11px;font-weight:500;margin-bottom:3px;color:var(--text2);}
 .cal-ev{font-size:10px;padding:2px 5px;border-radius:3px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.ev-vl{background:#1a2d52;color:#7aaeff;}           /* VL Approved */
-.ev-vl-pending{background:#2e1f0a;color:#f5a623;}  /* VL Pending */
-.ev-sl{background:#0d2e20;color:#3ecf8e;}           /* SL Approved */
-.ev-sl-pending{background:#2e0f1a;color:#f07ab0;}  /* SL Pending */
-.ev-el{background:#2e1f0a;color:#f5a623;}           /* EL Approved */
-.ev-el-pending{background:#2e0f0f;color:#f05252;}  /* EL Pending */
+.ev-vl{background:#1a2d52;color:#7aaeff;}       /* Approved */
+.ev-sl{background:#1a2d52;color:#7aaeff;}       /* Approved */
+.ev-el{background:#1a2d52;color:#7aaeff;}       /* Approved */
+.ev-vl-pending{background:#2e1f0a;color:#f5a623;} /* Pending */
+.ev-sl-pending{background:#2e1f0a;color:#f5a623;} /* Pending */
+.ev-el-pending{background:#2e1f0a;color:#f5a623;} /* Pending */
 
 /* ── AGENT PROFILES ── */
 .profile-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;}
@@ -264,12 +264,9 @@ input[type=text],input[type=password]{caret-color:var(--blue);}
             <div class="cal-month" id="cal-label">April 2026</div>
             <button onclick="calNav(1)">→</button>
           </div>
-          <div style="display:flex;gap:10px;align-items:center;font-size:12px;color:var(--text2);flex-wrap:wrap;">
-            <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#1a2d52;display:inline-block;"></span>VL Approved</span>
-            <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#2e1f0a;display:inline-block;"></span>VL Pending</span>
-            <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#0d2e20;display:inline-block;"></span>SL Approved</span>
-            <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#2e0f1a;display:inline-block;"></span>SL Pending</span>
-            <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#2e1f0a;display:inline-block;"></span>EL</span>
+          <div style="display:flex;gap:10px;align-items:center;font-size:12px;color:var(--text2);">
+            <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#1a2d52;display:inline-block;"></span>Approved</span>
+            <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#2e1f0a;display:inline-block;"></span>Pending</span>
           </div>
         </div>
         <div class="cal-grid" id="cal-grid"></div>
