@@ -589,7 +589,6 @@ async function loadAllData() {
   renderAgents();
   renderOT();
   renderCalendar();
-  renderLinks();
 }
 
 // ═══════════════════════════════════════════
@@ -908,7 +907,7 @@ function getLinkIcon(name, url) {
 // ── RENDER LINKS ──
 function renderLinks() {
   const container = document.getElementById('links-container');
-  if (!container) { setTimeout(renderLinks, 100); return; }
+  if (!container) return;
 
   // DEBUG: always show status
   const debugInfo = `CFG.links: ${CFG.links ? 'SET' : 'NOT SET'} | DATA.links: ${DATA.links.length} rows`;
