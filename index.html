@@ -134,12 +134,6 @@ tr:hover td{background:var(--bg3);}
 .link-name{font-size:13px;font-weight:500;}
 .link-desc{font-size:11px;color:var(--text2);}
 
-/* ── BCP ── */
-.bcp-step{display:flex;gap:14px;padding:12px 0;border-bottom:0.5px solid var(--border);}
-.bcp-step:last-child{border-bottom:none;}
-.bcp-num{width:28px;height:28px;border-radius:50%;background:var(--blue-dim);color:var(--blue-light);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;margin-top:1px;}
-.bcp-t{font-size:13px;font-weight:500;margin-bottom:3px;}
-.bcp-d{font-size:12px;color:var(--text2);line-height:1.5;}
 
 /* ── LOADING ── */
 .loading{display:flex;align-items:center;gap:8px;color:var(--text2);font-size:13px;padding:1rem;}
@@ -195,7 +189,7 @@ input[type=text],input[type=password]{caret-color:var(--blue);}
         <button class="nav-btn" onclick="showPage('ot')">OT Tracker</button>
         <button class="nav-btn" onclick="showPage('agents')">Agents</button>
         <button class="nav-btn" onclick="showPage('links')">Links</button>
-        <button class="nav-btn" onclick="showPage('bcp')">BCP</button>
+        
         <button class="nav-btn god-only" onclick="showPage('godmode')" id="godmode-nav-btn">⚡ God Mode</button>
       </div>
     </div>
@@ -278,41 +272,6 @@ input[type=text],input[type=password]{caret-color:var(--blue);}
     <div class="page" id="page-links" style="display:none">
       <div id="links-container">
         <div class="loading"><div class="spinner"></div> Loading links...</div>
-      </div>
-    </div>
-
-    <!-- ── BCP ── -->
-    <div class="page" id="page-bcp" style="display:none">
-      <div class="grid-2">
-        <div class="card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
-            <div class="section-title" style="margin:0;">Continuity Plan</div>
-            <span class="badge b-green">Active Rev. 3</span>
-          </div>
-          <div class="bcp-step"><div class="bcp-num">1</div><div><div class="bcp-t">Incident Detection</div><div class="bcp-d">Team lead or on-call agent identifies and classifies the incident (P1–P4).</div></div></div>
-          <div class="bcp-step"><div class="bcp-num">2</div><div><div class="bcp-t">Notify Stakeholders</div><div class="bcp-d">Escalate to IT Manager and department heads within 15 minutes of detection.</div></div></div>
-          <div class="bcp-step"><div class="bcp-num">3</div><div><div class="bcp-t">Activate Response Team</div><div class="bcp-d">Assemble incident response team. Assign roles: IC, Comms Lead, Tech Lead.</div></div></div>
-          <div class="bcp-step"><div class="bcp-num">4</div><div><div class="bcp-t">Deploy Workaround</div><div class="bcp-d">Switch to backup systems or manual workflows per SOP-BCP-02.</div></div></div>
-          <div class="bcp-step"><div class="bcp-num">5</div><div><div class="bcp-t">Resolution & RCA</div><div class="bcp-d">Restore service and file root cause analysis within 24 hours of resolution.</div></div></div>
-        </div>
-        <div>
-          <div class="card-sm" style="margin-bottom:1rem;">
-            <div class="section-title">Emergency Contacts</div>
-            <table>
-              <tr><th>Role</th><th>Name</th><th>Contact</th></tr>
-              <tr><td>IT Manager</td><td>Ben Flores</td><td style="color:var(--blue-light);">+63 917 *** ****</td></tr>
-              <tr><td>Network Lead</td><td>Jay Cruz</td><td style="color:var(--blue-light);">+63 918 *** ****</td></tr>
-              <tr><td>Security</td><td>Lea Navarro</td><td style="color:var(--blue-light);">+63 919 *** ****</td></tr>
-              <tr><td>Vendor Hotline</td><td>Telco ISP</td><td style="color:var(--blue-light);">1800-XXX-XXXX</td></tr>
-            </table>
-          </div>
-          <div class="card-sm">
-            <div class="section-title">Recovery Resources</div>
-            <div class="link-item"><div class="link-icon" style="background:#2e0f0f;color:#f05252;">■</div><div><div class="link-name">BCP Full Document</div><div class="link-desc">Confluence — SOP-BCP-01</div></div></div>
-            <div class="link-item"><div class="link-icon" style="background:#1a2d52;color:#7aaeff;">○</div><div><div class="link-name">Backup System Login</div><div class="link-desc">DR site credentials vault</div></div></div>
-            <div class="link-item"><div class="link-icon" style="background:#0d2e20;color:#3ecf8e;">▲</div><div><div class="link-name">Incident Log</div><div class="link-desc">Jira — IT-BCP board</div></div></div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -558,7 +517,7 @@ function showPage(p) {
   // Block god mode access for non-god users
   if (p === 'godmode' && (!SESSION || (SESSION.role||'').toLowerCase() !== 'god')) return;
   
-  ['home','calendar','ot','agents','links','bcp','godmode'].forEach(function(name) {
+  ['home','calendar','ot','agents','links','godmode'].forEach(function(name) {
     var el = document.getElementById('page-'+name);
     if (el) el.style.display = 'none';
   });
