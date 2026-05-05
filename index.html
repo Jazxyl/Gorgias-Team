@@ -157,6 +157,31 @@ tr:hover td{background:var(--bg3);}
 .config-btn:hover{background:#3a7de0;}
 
 input[type=text],input[type=password]{caret-color:var(--blue);}
+
+/* ── DASHBOARD ── */
+.dash-filters{display:flex;gap:10px;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;}
+.dash-filter-group{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);}
+.dash-select{padding:6px 10px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;cursor:pointer;}
+.dash-select:focus{outline:none;border-color:var(--blue);}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem;}
+.dash-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;}
+.dash-card-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:1rem;display:flex;align-items:center;gap:8px;}
+.dash-table{width:100%;border-collapse:collapse;font-size:13px;}
+.dash-table th{text-align:left;font-size:10px;font-weight:500;color:var(--text3);padding:7px 10px;border-bottom:0.5px solid var(--border);text-transform:uppercase;letter-spacing:0.05em;}
+.dash-table td{padding:9px 10px;border-bottom:0.5px solid var(--border);}
+.dash-table tr:last-child td{border-bottom:none;}
+.dash-table tr:hover td{background:var(--bg3);}
+.dash-score{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;}
+.dash-na{color:var(--text3);font-size:12px;font-style:italic;}
+.dash-bar-wrap{width:100%;background:var(--bg3);border-radius:4px;height:8px;margin-top:4px;}
+.dash-bar{height:8px;border-radius:4px;transition:width 0.4s;}
+.dash-agent-name{font-weight:500;}
+.dash-target{font-size:11px;color:var(--text3);margin-top:2px;}
+.dash-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem;}
+.dash-summary-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:0.85rem 1rem;}
+.dash-summary-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;}
+.dash-summary-val{font-size:20px;font-weight:500;}
+.dash-summary-sub{font-size:11px;color:var(--text2);margin-top:2px;}
 </style>
 </head>
 <body>
@@ -185,6 +210,7 @@ input[type=text],input[type=password]{caret-color:var(--blue);}
       <a class="topbar-logo" href="https://gorgias.gorgias.com" target="_blank" style="text-decoration:none;color:var(--blue);">💪 Gorgias</a>
       <div class="topbar-nav" id="main-nav">
         <button class="nav-btn active" onclick="showPage('home')">Home</button>
+        <button class="nav-btn" onclick="showPage('dashboard')">📊 Dashboard</button>
         <button class="nav-btn" onclick="showPage('calendar')">VL Calendar</button>
         <button class="nav-btn" onclick="showPage('ot')">OT Tracker</button>
         <button class="nav-btn" onclick="showPage('agents')">Agents</button>
@@ -205,6 +231,13 @@ input[type=text],input[type=password]{caret-color:var(--blue);}
   </div>
 
   <div class="content-area">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="page" id="page-dashboard" style="display:none">
+      <div id="dashboard-container">
+        <div class="loading"><div class="spinner"></div> Loading dashboard...</div>
+      </div>
+    </div>
 
     <!-- ── HOME ── -->
     <div class="page" id="page-home" style="display:none">
@@ -326,6 +359,20 @@ input[type=text],input[type=password]{caret-color:var(--blue);}
             <input class="config-input" id="cfg-links" placeholder="https://docs.google.com/spreadsheets/d/.../pub?gid=...&single=true&output=csv">
           </div>
         </div>
+        <div class="setup-step">
+          <div class="setup-num">7</div>
+          <div class="setup-text">
+            <strong style="color:var(--text);">Productivity Sheet</strong> — columns: <code>Agent name</code>, <code>Avg per hour</code>, <code>Month</code>, <code>Week</code><br>
+            <input class="config-input" id="cfg-productivity" placeholder="https://docs.google.com/spreadsheets/d/.../pub?gid=...&single=true&output=csv">
+          </div>
+        </div>
+        <div class="setup-step">
+          <div class="setup-num">8</div>
+          <div class="setup-text">
+            <strong style="color:var(--text);">Quality Sheet</strong> — columns: <code>agent</code>, <code>QA_score</code>, <code>Month</code>, <code>Week</code><br>
+            <input class="config-input" id="cfg-quality" placeholder="https://docs.google.com/spreadsheets/d/.../pub?gid=...&single=true&output=csv">
+          </div>
+        </div>
         <button class="config-btn" onclick="saveConfig()">Save & Connect Sheets</button>
         <span id="cfg-status" style="font-size:12px;color:var(--green);margin-left:12px;"></span>
         <button class="config-btn" style="background:var(--amber);margin-left:8px;" onclick="debugCSV()">🔍 Debug CSV</button>
@@ -357,6 +404,8 @@ const DEFAULTS = {
   leaves:        'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=106873471&single=true&output=csv',
   ot:            'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=600018604&single=true&output=csv',
   announcements: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=616452407&single=true&output=csv',
+  productivity:  '',
+  quality:       '',
   links:         'https://docs.google.com/spreadsheets/d/e/2PACX-1vQrazwPmdTa9otTIuCQaIHaH9dwjJjum41Ruw1_S9eUtjDskNheaQkbTxSPP-_W3TOGzDEXGTnUkgkK/pub?gid=953127428&single=true&output=csv'
 };
 
@@ -374,7 +423,7 @@ let CFG = buildCFG();
 let SESSION = null;
 
 // cached sheet data
-let DATA = { users:[], agents:[], leaves:[], ot:[], announcements:[], links:[] };
+let DATA = { users:[], agents:[], leaves:[], ot:[], announcements:[], links:[], productivity:[], quality:[] };
 
 // ═══════════════════════════════════════════
 //  CSV PARSER
@@ -517,7 +566,7 @@ function showPage(p) {
   // Block god mode access for non-god users
   if (p === 'godmode' && (!SESSION || (SESSION.role||'').toLowerCase() !== 'god')) return;
   
-  ['home','calendar','ot','agents','links','godmode'].forEach(function(name) {
+  ['dashboard','home','calendar','ot','agents','links','godmode'].forEach(function(name) {
     var el = document.getElementById('page-'+name);
     if (el) el.style.display = 'none';
   });
@@ -531,6 +580,7 @@ function showPage(p) {
   if (p === 'calendar') renderCalendar();
   if (p === 'ot') renderOT();
   if (p === 'links') renderLinks();
+  if (p === 'dashboard') renderDashboard();
 }
 
 // ═══════════════════════════════════════════
@@ -543,6 +593,8 @@ async function loadAllData() {
   if (CFG.ot)            promises.push(fetchCSV(CFG.ot).then(d => DATA.ot = d));
   if (CFG.announcements) promises.push(fetchCSV(CFG.announcements).then(d => DATA.announcements = d));
   if (CFG.links)         promises.push(fetchCSV(CFG.links).then(d => DATA.links = d));
+  if (CFG.productivity)  promises.push(fetchCSV(CFG.productivity).then(d => DATA.productivity = d));
+  if (CFG.quality)       promises.push(fetchCSV(CFG.quality).then(d => DATA.quality = d));
   if (CFG.users)         promises.push(fetchCSV(CFG.users).then(d => DATA.users = d));
 
   await Promise.all(promises);
@@ -550,6 +602,7 @@ async function loadAllData() {
   renderAgents();
   renderOT();
   renderCalendar();
+  if (currentPage === 'dashboard') renderDashboard();
 }
 
 // ═══════════════════════════════════════════
@@ -764,13 +817,13 @@ function filterAgents() {
 // ═══════════════════════════════════════════
 function loadCfgInputs() {
   CFG = buildCFG();
-  ['users','agents','leaves','ot','announcements','links'].forEach(k => {
+  ['users','agents','leaves','ot','announcements','links','productivity','quality'].forEach(k => {
     const el = document.getElementById('cfg-'+k);
     if (el) el.value = CFG[k] || '';
   });
   const statusEl = document.getElementById('cfg-saved-status');
   if (statusEl) {
-    const keys = ['users','agents','leaves','ot','announcements','links'];
+    const keys = ['users','agents','leaves','ot','announcements','links','productivity','quality'];
     const saved = keys.filter(k => CFG[k]);
     const missing = keys.filter(k => !CFG[k]);
     statusEl.innerHTML = saved.length
@@ -780,7 +833,7 @@ function loadCfgInputs() {
 }
 
 function saveConfig() {
-  ['users','agents','leaves','ot','announcements','links'].forEach(k => {
+  ['users','agents','leaves','ot','announcements','links','productivity','quality'].forEach(k => {
     const el = document.getElementById('cfg-'+k);
     if (el) {
       const val = el.value.trim();
@@ -917,6 +970,195 @@ function renderLinks() {
   container.innerHTML = html;
 }
 
+
+// ── DASHBOARD HELPERS ──
+function tphColor(val) {
+  if (val >= 2.0) return {fg:'#3ecf8e', bg:'#0d2e20'};
+  if (val >= 1.7) return {fg:'#f5a623', bg:'#2e1f0a'};
+  if (val >= 1.5) return {fg:'#f07a23', bg:'#2e1500'};
+  return {fg:'#f05252', bg:'#2e0f0f'};
+}
+function qaColor(val) {
+  if (val >= 95) return {fg:'#3ecf8e', bg:'#0d2e20'};
+  if (val >= 90) return {fg:'#8ecf3e', bg:'#1a2e0a'};
+  if (val >= 85) return {fg:'#f5a623', bg:'#2e1f0a'};
+  if (val >= 75) return {fg:'#f07a23', bg:'#2e1500'};
+  return {fg:'#f05252', bg:'#2e0f0f'};
+}
+
+// Per-user filter state (not shared between users)
+const DASH_FILTER = { type: 'weekly', week: '', month: '' };
+
+function renderDashboard() {
+  const container = document.getElementById('dashboard-container');
+  if (!container) return;
+
+  // Build filter UI
+  const prodData = DATA.productivity.filter(r => r['agent name'] && r['avg per hour'] && r['avg per hour'] !== '-');
+  const qaData = DATA.quality.filter(r => r['agent'] && r['qa_score']);
+
+  // Get unique weeks and months from productivity data
+  const weeks = [...new Set(prodData.map(r => r['week']).filter(Boolean))].sort((a,b) => +a - +b);
+  const months = [...new Set(prodData.map(r => r['month']).filter(Boolean))].sort((a,b) => +a - +b);
+
+  // Set defaults if not set
+  if (!DASH_FILTER.week && weeks.length) DASH_FILTER.week = weeks[weeks.length - 1];
+  if (!DASH_FILTER.month && months.length) DASH_FILTER.month = months[months.length - 1];
+
+  container.innerHTML = `
+    <div class="dash-filters">
+      <div class="dash-filter-group">
+        <label>View:</label>
+        <select class="dash-select" id="dash-type" onchange="DASH_FILTER.type=this.value;renderDashboard()">
+          <option value="weekly" ${DASH_FILTER.type==='weekly'?'selected':''}>Weekly</option>
+          <option value="monthly" ${DASH_FILTER.type==='monthly'?'selected':''}>Monthly</option>
+        </select>
+      </div>
+      ${DASH_FILTER.type === 'weekly' ? `
+      <div class="dash-filter-group">
+        <label>Week:</label>
+        <select class="dash-select" id="dash-week" onchange="DASH_FILTER.week=this.value;renderDashboard()">
+          ${weeks.map(w => `<option value="${w}" ${DASH_FILTER.week===w?'selected':''}>Week ${w}</option>`).join('')}
+        </select>
+      </div>` : `
+      <div class="dash-filter-group">
+        <label>Month:</label>
+        <select class="dash-select" id="dash-month" onchange="DASH_FILTER.month=this.value;renderDashboard()">
+          ${months.map(m => {
+            const names = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            return `<option value="${m}" ${DASH_FILTER.month===m?'selected':''}>Month ${m} (${names[+m]||m})</option>`;
+          }).join('')}
+        </select>
+      </div>`}
+    </div>
+    <div id="dash-content"></div>
+  `;
+
+  // Filter data
+  const isWeekly = DASH_FILTER.type === 'weekly';
+  const filterKey = isWeekly ? DASH_FILTER.week : DASH_FILTER.month;
+  const filterField = isWeekly ? 'week' : 'month';
+
+  const filteredProd = prodData.filter(r => r[filterField] === filterKey);
+  const filteredQA = qaData.filter(r => r[filterField] === filterKey);
+
+  // Get all agents
+  const agentsProd = [...new Set(filteredProd.map(r => r['agent name']))].sort();
+  const agentsQA = [...new Set(filteredQA.map(r => r['agent']))].sort();
+  const allAgents = [...new Set([...agentsProd, ...agentsQA])].sort();
+
+  // Aggregate productivity (each agent has one row per week, multiple per month — average)
+  const prodByAgent = {};
+  agentsProd.forEach(name => {
+    const rows = filteredProd.filter(r => r['agent name'] === name && r['avg per hour'] !== '-');
+    if (!rows.length) return;
+    const vals = rows.map(r => parseFloat(r['avg per hour'])).filter(v => !isNaN(v) && v > 0);
+    if (vals.length) prodByAgent[name] = vals.reduce((a,b)=>a+b,0)/vals.length;
+  });
+
+  // Aggregate quality (average QA_score per agent)
+  const qaByAgent = {};
+  agentsQA.forEach(name => {
+    const rows = filteredQA.filter(r => r['agent'] === name);
+    const vals = rows.map(r => parseFloat(r['qa_score'])).filter(v => !isNaN(v));
+    if (vals.length) qaByAgent[name] = vals.reduce((a,b)=>a+b,0)/vals.length;
+  });
+
+  // Summary metrics
+  const prodVals = Object.values(prodByAgent).filter(v => v > 0);
+  const qaVals = Object.values(qaByAgent).filter(v => v > 0);
+  const avgTPH = prodVals.length ? (prodVals.reduce((a,b)=>a+b,0)/prodVals.length).toFixed(2) : '—';
+  const avgQA = qaVals.length ? (qaVals.reduce((a,b)=>a+b,0)/qaVals.length).toFixed(1) : '—';
+  const aboveTPH = prodVals.filter(v => v >= 2.0).length;
+  const aboveQA = qaVals.filter(v => v >= 90).length;
+
+  const content = document.getElementById('dash-content');
+  if (!content) return;
+
+  content.innerHTML = `
+    <!-- Summary cards -->
+    <div class="dash-summary">
+      <div class="dash-summary-card">
+        <div class="dash-summary-label">Avg TPH</div>
+        <div class="dash-summary-val" style="color:${parseFloat(avgTPH)>=2?'#3ecf8e':parseFloat(avgTPH)>=1.7?'#f5a623':'#f05252'}">${avgTPH}</div>
+        <div class="dash-summary-sub">Target: 2.0</div>
+      </div>
+      <div class="dash-summary-card">
+        <div class="dash-summary-label">At/Above TPH Target</div>
+        <div class="dash-summary-val">${aboveTPH}<span style="font-size:14px;color:var(--text2)"> / ${prodVals.length}</span></div>
+        <div class="dash-summary-sub">agents meeting 2.0+</div>
+      </div>
+      <div class="dash-summary-card">
+        <div class="dash-summary-label">Avg QA Score</div>
+        <div class="dash-summary-val" style="color:${parseFloat(avgQA)>=90?'#3ecf8e':parseFloat(avgQA)>=85?'#f5a623':'#f05252'}">${avgQA}%</div>
+        <div class="dash-summary-sub">Target: 90%</div>
+      </div>
+      <div class="dash-summary-card">
+        <div class="dash-summary-label">At/Above QA Target</div>
+        <div class="dash-summary-val">${aboveQA}<span style="font-size:14px;color:var(--text2)"> / ${qaVals.length}</span></div>
+        <div class="dash-summary-sub">agents meeting 90%+</div>
+      </div>
+    </div>
+
+    <!-- Tables side by side -->
+    <div class="dash-grid">
+      <!-- Productivity -->
+      <div class="dash-card">
+        <div class="dash-card-title">⚡ Productivity — Tickets Per Hour</div>
+        <table class="dash-table">
+          <thead><tr><th>Agent</th><th>TPH</th><th>vs Target</th></tr></thead>
+          <tbody>
+            ${allAgents.map(name => {
+              const tph = prodByAgent[name];
+              if (tph === undefined) return `<tr><td class="dash-agent-name">${name}</td><td colspan="2"><span class="dash-na">No data</span></td></tr>`;
+              const {fg, bg} = tphColor(tph);
+              const pct = Math.min((tph / 2.0) * 100, 100);
+              const diff = (tph - 2.0).toFixed(2);
+              const diffStr = diff >= 0 ? `+${diff}` : diff;
+              return `<tr>
+                <td class="dash-agent-name">${name}</td>
+                <td><span class="dash-score" style="color:${fg};background:${bg}">${tph.toFixed(2)}</span></td>
+                <td style="width:120px">
+                  <div style="font-size:11px;color:${+diff>=0?'#3ecf8e':'#f05252'};font-weight:500">${diffStr}</div>
+                  <div class="dash-bar-wrap"><div class="dash-bar" style="width:${pct}%;background:${fg}"></div></div>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Quality -->
+      <div class="dash-card">
+        <div class="dash-card-title">🎯 Quality — QA Score</div>
+        <table class="dash-table">
+          <thead><tr><th>Agent</th><th>QA Score</th><th>vs Target</th></tr></thead>
+          <tbody>
+            ${allAgents.map(name => {
+              const qa = qaByAgent[name];
+              if (qa === undefined) return `<tr><td class="dash-agent-name">${name}</td><td colspan="2"><span class="dash-na">No evaluations</span></td></tr>`;
+              const {fg, bg} = qaColor(qa);
+              const pct = Math.min(qa, 100);
+              const diff = (qa - 90).toFixed(1);
+              const diffStr = diff >= 0 ? `+${diff}` : diff;
+              return `<tr>
+                <td class="dash-agent-name">${name}</td>
+                <td><span class="dash-score" style="color:${fg};background:${bg}">${qa.toFixed(1)}%</span></td>
+                <td style="width:120px">
+                  <div style="font-size:11px;color:${+diff>=0?'#3ecf8e':'#f05252'};font-weight:500">${diffStr}%</div>
+                  <div class="dash-bar-wrap"><div class="dash-bar" style="width:${pct}%;background:${fg}"></div></div>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    ${(!prodVals.length && !qaVals.length) ? '<div style="color:var(--text2);font-size:13px;padding:1rem;">No data for this period. Connect your sheets in God Mode.</div>' : ''}
+  `;
+}
+
 function openLink(url) { if(url && url !== '#') window.open(url,'_blank'); }
 
 async function debugCSV() {
@@ -924,7 +1166,7 @@ async function debugCSV() {
   out.style.display = 'block';
   out.textContent = 'Fetching...';
   
-  const keys = ['users','agents','leaves','ot','announcements','links'];
+  const keys = ['users','agents','leaves','ot','announcements','links','productivity','quality'];
   let result = '';
   
   for (const k of keys) {
