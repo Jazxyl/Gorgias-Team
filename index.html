@@ -715,7 +715,11 @@ async function loadAllData() {
   if (CFG.quality)       promises.push(fetchCSV(CFG.quality).then(d => DATA.quality = d));
   if (CFG.users)         promises.push(fetchCSV(CFG.users).then(d => DATA.users = d));
 
-  await Promise.all(promises);
+  try {
+    await Promise.all(promises);
+  } catch(e) {
+    console.warn('Some sheets failed to load:', e);
+  }
   renderHome();
   renderAgents();
   renderOT();
