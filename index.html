@@ -182,6 +182,29 @@ input[type=text],input[type=password]{caret-color:var(--blue);}
 /* ── DASHBOARD ── */
 @keyframes fadeSlideIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 @keyframes barGrow{from{width:0%;}to{width:var(--bar-width);}}
+/* ── HOME BACKGROUND ── */
+#page-home {
+  position: relative;
+}
+.home-bg {
+  position: fixed;
+  top: 52px;
+  left: 0; right: 0; bottom: 0;
+  background-image: url('https://drive.google.com/uc?export=view&id=1QwnMlPlxzgSNR19TNxDeFQ-AQNIFp24e');
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  opacity: 0.13;
+  z-index: 0;
+  pointer-events: none;
+}
+#page-home .grid,
+#announcements-container,
+#home-metrics {
+  position: relative;
+  z-index: 1;
+}
+
 /* ── PEER REVIEW ── */
 .pr-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:10px;}
 .pr-count{font-size:13px;color:var(--text2);}
@@ -311,6 +334,7 @@ input[type=text],input[type=password]{caret-color:var(--blue);}
 
     <!-- ── HOME ── -->
     <div class="page" id="page-home" style="display:none">
+      <div class="home-bg"></div>
       <div id="announcements-container">
         <div class="loading"><div class="spinner"></div> Loading announcements...</div>
       </div>
